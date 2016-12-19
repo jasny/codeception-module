@@ -2,7 +2,7 @@ class_name: FunctionalTester
 modules:
     enabled:
         - \Helper\Functional
-        - \Jasny\Codeception\Module\JasnyMVC:
+        - \Jasny\Codeception\Module:
               router: tests/_data/router.php
         - REST:
-              depends: \Jasny\Codeception\Module\JasnyMVC
+              depends: \Jasny\Codeception\Module

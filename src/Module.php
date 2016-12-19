@@ -1,17 +1,17 @@
 <?php
 
-namespace Jasny\Codeception\Module;
+namespace Jasny\Codeception;
 
 use Jasny\Router;
 use Codeception\Configuration;
 use Codeception\Lib\Framework;
 use Codeception\TestInterface;
-use Jasny\Codeception\Connector\JasnyMVC as Connector;
+use Jasny\Codeception\Connector;
 
 /**
  * Module for running functional tests using Jasny MVC
  */
-class JasnyMVC extends Framework
+class Module extends Framework
 {
     /**
      * Required configuration fields
@@ -22,7 +22,7 @@ class JasnyMVC extends Framework
     /**
      * @var Router 
      */
-    protected $router;
+    public $router;
     
     
     /**

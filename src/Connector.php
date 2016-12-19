@@ -1,6 +1,6 @@
 <?php
 
-namespace Jasny\Codeception\Connector;
+namespace Jasny\Codeception;
 
 use Psr\Http\Message\UploadedFileInterface;
 use Jasny\HttpMessage\Response;
@@ -16,7 +16,7 @@ use Symfony\Component\BrowserKit\Response as BrowserKitResponse;
 /**
  * Codeception connector for Jasny\MVC
  */
-class JasnyMVC extends Client
+class Connector extends Client
 {
     /**
      * @var Router
