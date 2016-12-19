@@ -1,5 +1,5 @@
 {
-    "name": "jasny/codeception-module-jasnymvc",
+    "name": "jasny/codeception-module",
     "description": "Codeception Module for Jasny MVC",
     "type": "library",
     "license": "MIT",
