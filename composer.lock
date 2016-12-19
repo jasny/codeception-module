@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "c6e98b4e42a4b9ed17fafbc565dd28b3",
-    "content-hash": "a7796c4530de07890fd259bc2871bd3f",
+    "hash": "38bb33b9715d632f717fe2188d574e0d",
+    "content-hash": "b271760f0a79bd3cb023702d8b0f2e84",
     "packages": [
         {
             "name": "behat/gherkin",
@@ -157,6 +157,61 @@
                 "unit testing"
             ],
             "time": "2016-12-05 04:12:24"
+        },
+        {
+            "name": "dflydev/apache-mime-types",
+            "version": "v1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dflydev/dflydev-apache-mime-types.git",
+                "reference": "f30a57e59b7476e4c5270b6a0727d79c9c0eb861"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/dflydev/dflydev-apache-mime-types/zipball/f30a57e59b7476e4c5270b6a0727d79c9c0eb861",
+                "reference": "f30a57e59b7476e4c5270b6a0727d79c9c0eb861",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3"
+            },
+            "require-dev": {
+                "twig/twig": "1.*"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Dflydev\\ApacheMimeTypes": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dragonfly Development Inc.",
+                    "email": "info@dflydev.com",
+                    "homepage": "http://dflydev.com"
+                },
+                {
+                    "name": "Beau Simensen",
+                    "email": "beau@dflydev.com",
+                    "homepage": "http://beausimensen.com"
+                }
+            ],
+            "description": "Apache MIME Types",
+            "keywords": [
+                "apache",
+                "mime",
+                "mimetypes"
+            ],
+            "time": "2013-05-14 02:02:01"
         },
         {
             "name": "doctrine/instantiator",
@@ -431,27 +486,38 @@
             "time": "2016-06-24 23:00:38"
         },
         {
-            "name": "jasny/mvc",
-            "version": "v1.3.2",
+            "name": "jasny/controller",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/jasny/mvc.git",
-                "reference": "8269f6526c505e8591458ce5ca05208ad9cf1268"
+                "url": "https://github.com/jasny/controller.git",
+                "reference": "9701118b9b34e19d5de1fe56755afdd29c0c93a1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jasny/mvc/zipball/8269f6526c505e8591458ce5ca05208ad9cf1268",
-                "reference": "8269f6526c505e8591458ce5ca05208ad9cf1268",
+                "url": "https://api.github.com/repos/jasny/controller/zipball/9701118b9b34e19d5de1fe56755afdd29c0c93a1",
+                "reference": "9701118b9b34e19d5de1fe56755afdd29c0c93a1",
                 "shasum": ""
             },
             "require": {
+                "dflydev/apache-mime-types": "^1.0",
                 "jasny/php-functions": "^2.0",
-                "php": ">=5.4.0"
+                "php": ">=5.6.0",
+                "psr/http-message": "^1.0"
+            },
+            "require-dev": {
+                "jasny/php-code-quality": "^2.0",
+                "jasny/twig-extensions": "^1.0",
+                "twig/twig": "^1.26"
+            },
+            "suggest": {
+                "jasny/twig-extensions": "Usefull extensions for Twig",
+                "twig/twig": "Needed to work with Twig templates"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Jasny\\MVC\\": "src/"
+                    "Jasny\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -465,14 +531,60 @@
                     "homepage": "http://www.jasny.net"
                 }
             ],
-            "description": "The basics for an MVC application",
+            "description": "A general controller for PSR-7",
             "keywords": [
                 "controller",
-                "mvc",
-                "router",
-                "routing"
+                "mvc"
             ],
-            "time": "2016-11-10 13:42:51"
+            "time": "2016-12-02 20:37:33"
+        },
+        {
+            "name": "jasny/http-message",
+            "version": "v1.0.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jasny/http-message.git",
+                "reference": "3fd2cb4b79d342bbced14660895dc19a792fb51d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jasny/http-message/zipball/3fd2cb4b79d342bbced14660895dc19a792fb51d",
+                "reference": "3fd2cb4b79d342bbced14660895dc19a792fb51d",
+                "shasum": ""
+            },
+            "require": {
+                "jasny/php-functions": "^2.2",
+                "php": ">=5.6.0",
+                "psr/http-message": "^1.0"
+            },
+            "require-dev": {
+                "jasny/php-code-quality": "^2.0",
+                "mikey179/vfsstream": "^1.6"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jasny\\HttpMessage\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Arnold Daniels",
+                    "email": "arnold@jasny.net",
+                    "homepage": "http://www.jasny.net"
+                }
+            ],
+            "description": "PSR-7 implementation for handling HTTP requests",
+            "keywords": [
+                "http",
+                "mvc",
+                "psr-7"
+            ],
+            "time": "2016-12-19 12:53:41"
         },
         {
             "name": "jasny/php-functions",
@@ -518,6 +630,54 @@
             ],
             "description": "A set of useful PHP functions",
             "time": "2016-03-10 09:49:35"
+        },
+        {
+            "name": "jasny/router",
+            "version": "v1.0.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jasny/router.git",
+                "reference": "894a628f4b2c7ce0dbbdd46f33af0a9b52b6dbc3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jasny/router/zipball/894a628f4b2c7ce0dbbdd46f33af0a9b52b6dbc3",
+                "reference": "894a628f4b2c7ce0dbbdd46f33af0a9b52b6dbc3",
+                "shasum": ""
+            },
+            "require": {
+                "jasny/php-functions": "^2.0",
+                "php": ">=5.6.0",
+                "psr/http-message": "^1.0",
+                "psr/log": "^1.0"
+            },
+            "require-dev": {
+                "jasny/php-code-quality": "^2.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jasny\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Arnold Daniels",
+                    "email": "arnold@jasny.net",
+                    "homepage": "http://www.jasny.net"
+                }
+            ],
+            "description": "A versatile router for PHP",
+            "keywords": [
+                "mvc",
+                "router",
+                "routing"
+            ],
+            "time": "2016-12-02 16:22:46"
         },
         {
             "name": "myclabs/deep-copy",
@@ -2325,12 +2485,76 @@
             "time": "2016-11-23 20:04:58"
         }
     ],
-    "packages-dev": [],
+    "packages-dev": [
+        {
+            "name": "twig/twig",
+            "version": "v1.29.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/twigphp/Twig.git",
+                "reference": "74f723e542368ca2080b252740be5f1113ebb898"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/twigphp/Twig/zipball/74f723e542368ca2080b252740be5f1113ebb898",
+                "reference": "74f723e542368ca2080b252740be5f1113ebb898",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.2.7"
+            },
+            "require-dev": {
+                "symfony/debug": "~2.7",
+                "symfony/phpunit-bridge": "~3.2@dev"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.29-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Twig_": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com",
+                    "homepage": "http://fabien.potencier.org",
+                    "role": "Lead Developer"
+                },
+                {
+                    "name": "Armin Ronacher",
+                    "email": "armin.ronacher@active-4.com",
+                    "role": "Project Founder"
+                },
+                {
+                    "name": "Twig Team",
+                    "homepage": "http://twig.sensiolabs.org/contributors",
+                    "role": "Contributors"
+                }
+            ],
+            "description": "Twig, the flexible, fast, and secure template language for PHP",
+            "homepage": "http://twig.sensiolabs.org",
+            "keywords": [
+                "templating"
+            ],
+            "time": "2016-12-13 17:28:18"
+        }
+    ],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": [],
+    "platform": {
+        "php": ">=5.6.0"
+    },
     "platform-dev": []
 }
