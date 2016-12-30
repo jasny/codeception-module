@@ -21,7 +21,7 @@ class ConnectorTest extends \Codeception\TestCase\Test
     protected $tester;
     
     /**
-     * @var type 
+     * @var \org\bovigo\vfs\vfsStreamDirectory 
      */
     protected $root;
     
@@ -88,19 +88,9 @@ class ConnectorTest extends \Codeception\TestCase\Test
     
     public function requestProvider()
     {
-        $files = [
-            'file' => [
-                'name' => 'one.txt',
-                'type' => 'text/plain',
-                'error' => UPLOAD_ERR_OK,
-                'size' => filesize(vfsStream::url('root/one.txt')),
-                'tmp_name' => vfsStream::url('root/one.txt'),
-            ]
-        ];
-        
         return [
-            ['GET', []],
-            ['POST', $files]
+            ['GET'],
+            ['POST']
         ];
     }
     
@@ -108,9 +98,8 @@ class ConnectorTest extends \Codeception\TestCase\Test
      * @dataProvider requestProvider
      * 
      * @param string $method
-     * @param array  $files
      */
-    public function testRequest($method, array $files)
+    public function testRequest($method)
     {
         $psrResponse = $this->createMock(ResponseInterface::class);
         $psrResponse->expects($this->once())->method('getStatusCode')->willReturn(200);
@@ -131,6 +120,15 @@ class ConnectorTest extends \Codeception\TestCase\Test
         
         $uri = 'http://www.example.com/foo?bar=1';
         $parameters = ['color' => 'blue', 'mood' => 'sunny'];
+        $files = $method === 'POST' ? [
+            'file' => [
+                'name' => 'one.txt',
+                'type' => 'text/plain',
+                'error' => UPLOAD_ERR_OK,
+                'size' => filesize(vfsStream::url('root/one.txt')),
+                'tmp_name' => vfsStream::url('root/one.txt'),
+            ]
+        ] : [];
         $server = [
             'HTTP_REFERER' => 'http://www.example.com',
             'HTTP_USER_AGENT' => 'Test/1.0'
