@@ -29,18 +29,19 @@ Via `composer.json`:
 
 ## Config
 
-* router: Function name that returns the router or path to file that returns the router
+* router: Path to file that returns the router
+* global_environment: Bind to the global environment for legacy testing
 
 ```yaml
-\Jasny\Codeception\Module:
-  router: App::router()
-```
-
-OR
-
-```yaml
-\Jasny\Codeception\Module:
-  router: path/to/router.php
+class_name: FunctionalTester
+modules:
+    enabled:
+        - \Helper\Functional
+        - \Jasny\Codeception\Module:
+              router: tests/_data/router.php
+              global_environment: false
+        - REST:
+              depends: \Jasny\Codeception\Module
 ```
 
 Example of `router.php`.

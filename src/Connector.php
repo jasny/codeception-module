@@ -2,6 +2,7 @@
 
 namespace Jasny\Codeception;
 
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Jasny\HttpMessage\Response;
 use Jasny\HttpMessage\ServerRequest;
@@ -24,9 +25,16 @@ class Connector extends Client
     protected $router;
     
     /**
+     * @var false
+     */
+    protected $useGlobalEnvironment = false;
+    
+    
+    /**
      * Set the router
      * 
-     * @param Router
+     * @param Router $router
+     * @param string $legacy
      */
     public function setRouter(Router $router)
     {
@@ -41,6 +49,21 @@ class Connector extends Client
     public function getRouter()
     {
         return $this->router;
+    }
+    
+    
+    /**
+     * Get or set the global environment flag
+     * 
+     * @param boolean $enable
+     */
+    public function useGlobalEnvironment($enable = null)
+    {
+        if (isset($enable)) {
+            $this->useGlobalEnvironment = $enable;
+        }
+        
+        return $this->useGlobalEnvironment;
     }
 
 
@@ -64,6 +87,22 @@ class Connector extends Client
     }
     
     /**
+     * Create a PSR-7 Server request object.
+     * 
+     * @return ServerRequest
+     */
+    protected function createPsrRequest()
+    {
+        $psrRequest = new ServerRequest();
+        
+        if ($this->useGlobalEnvironment) {
+            $psrRequest = $psrRequest->withGlobalEnvironment(true);
+        }
+        
+        return $psrRequest;
+    }
+    
+    /**
      * Convert a codeception request to a Jasny PSR-7 server request
      * 
      * @param BrowserKitRequest $request
@@ -76,7 +115,7 @@ class Connector extends Client
         $stream = fopen('php://temp', 'r+');
         fwrite($stream, $request->getContent());
         
-        $psrRequest = (new ServerRequest())
+        $psrRequest = $this->createPsrRequest()
             ->withServerParams($request->getServer())
             ->withMethod($request->getMethod())
             ->withRequestTarget((string)($uri->withScheme('')->withHost('')->withPort('')->withUserInfo('')))
@@ -96,10 +135,10 @@ class Connector extends Client
     /**
      * Convert a Jasny PSR-7 response to a codeception response
      * 
-     * @param Response $psrResponse
+     * @param ResponseInterface $psrResponse
      * @return BrowserKitResponse
      */
-    protected function convertResponse(Response $psrResponse)
+    protected function convertResponse(ResponseInterface $psrResponse)
     {
         return new BrowserKitResponse(
             (string)$psrResponse->getBody(),
@@ -146,7 +185,8 @@ class Connector extends Client
         
         $psrRequest = $this->convertRequest($request);
         
-        $psrResponse = $this->getRouter()->handle($psrRequest, new Response());
+        $router = $this->getRouter();
+        $psrResponse = $router->handle($psrRequest, new Response());
         
         return $this->convertResponse($psrResponse);
     }

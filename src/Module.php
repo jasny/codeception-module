@@ -26,15 +26,23 @@ class Module extends Framework
     
     
     /**
+     * Load the router by including the file.
+     * @codeCoverageIgnore
+     * 
+     * @param string $file
+     * @return Router
+     */
+    protected function loadRouter($file)
+    {
+        return include $file;
+    }
+    
+    /**
      * Initialize the router
      */
     protected function initRouter()
     {
-        if (substr($this->config['router'], -2) === '()') {
-            $router = call_user_func(substr($this->config['router'], 0, -2));
-        } else {
-            $router = include Configuration::projectDir() . $this->config['router'];
-        }
+        $router = $this->loadRouter(Configuration::projectDir() . $this->config['router']);
         
         if (!$router instanceof Router) {
             throw new \UnexpectedValueException("Failed to get router from '{$this->config['router']}'");
@@ -62,7 +70,9 @@ class Module extends Framework
     public function _before(TestInterface $test)
     {
         $this->client = new Connector();
+        
         $this->client->setRouter($this->router);
+        $this->client->useGlobalEnvironment(!empty($this->config['global_environment']));
         
         parent::_before($test);
     }

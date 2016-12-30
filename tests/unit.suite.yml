@@ -1,0 +1,9 @@
+class_name: UnitTester
+modules:
+    enabled:
+        - \Helper\Unit
+coverage:
+    enabled: true
+    whitelist:
+        include:
+            - src/*
