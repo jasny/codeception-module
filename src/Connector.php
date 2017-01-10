@@ -2,6 +2,7 @@
 
 namespace Jasny\Codeception;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Jasny\HttpMessage\Response;
@@ -25,9 +26,16 @@ class Connector extends Client
     protected $router;
     
     /**
-     * @var false
+     * Request with the current global environent
+     * @var ServerRequestInterface
      */
-    protected $useGlobalEnvironment = false;
+    protected $baseRequest;
+    
+    /**
+     * Request with the current global environent
+     * @var ResponseInterface
+     */
+    protected $baseResponse;
     
     
     /**
@@ -53,17 +61,74 @@ class Connector extends Client
     
     
     /**
-     * Get or set the global environment flag
+     * Set the base request
      * 
-     * @param boolean $enable
+     * @param ServerRequestInterface $request
      */
-    public function useGlobalEnvironment($enable = null)
+    public function setBaseRequest(ServerRequestInterface $request)
     {
-        if (isset($enable)) {
-            $this->useGlobalEnvironment = $enable;
+        if ($request instanceof ServerRequest && $request->isStale()) {
+            throw new \RuntimeException("Unable to set base request: ServerRequest is stale");
         }
         
-        return $this->useGlobalEnvironment;
+        $this->baseRequest = $request;
+    }
+    
+    /**
+     * Get the base request
+     * 
+     * @return ServerRequestInterface
+     */
+    public function getBaseRequest()
+    {
+        if (!isset($this->baseRequest)) {
+            $this->baseRequest = new ServerRequest();
+        }
+        
+        return $this->baseRequest;
+    }
+    
+    
+    /**
+     * Set the base response
+     * 
+     * @param ResponseInterface $response
+     */
+    public function setBaseResponse(ResponseInterface $response)
+    {
+        if ($response instanceof Response && $response->isStale()) {
+            throw new \RuntimeException("Unable to set base response: Response is stale");
+        }
+            
+        $this->baseResponse = $response;
+    }
+    
+    /**
+     * Get the base response
+     * 
+     * @return ResponseInterface
+     */
+    public function getBaseResponse()
+    {
+        if (!isset($this->baseResponse)) {
+            $this->baseResponse = new Response();
+        }
+        
+        return $this->baseResponse;
+    }
+    
+    /**
+     * Reset the request
+     */
+    public function reset()
+    {
+        if (isset($this->baseRequest) && $this->baseRequest instanceof ServerRequest && $this->baseRequest->isStale()) {
+            $this->baseRequest = $this->baseRequest->revive();
+        }
+
+        if (isset($this->baseResponse) && $this->baseResponse instanceof Response && $this->baseResponse->isStale()) {
+            $this->baseResponse = $this->baseResponse->revive();
+        }
     }
 
 
@@ -76,6 +141,8 @@ class Connector extends Client
     protected function buildFullUri(BrowserKitRequest $request)
     {
         $uri = new Uri($request->getUri());
+        
+        $queryParams = null;
         parse_str($uri->getQuery(), $queryParams);
         
         if ($request->getMethod() === 'GET') {
@@ -84,22 +151,6 @@ class Connector extends Client
         }
         
         return [$uri, $queryParams];
-    }
-    
-    /**
-     * Create a PSR-7 Server request object.
-     * 
-     * @return ServerRequest
-     */
-    protected function createPsrRequest()
-    {
-        $psrRequest = new ServerRequest();
-        
-        if ($this->useGlobalEnvironment) {
-            $psrRequest = $psrRequest->withGlobalEnvironment(true);
-        }
-        
-        return $psrRequest;
     }
     
     /**
@@ -114,18 +165,19 @@ class Connector extends Client
         
         $stream = fopen('php://temp', 'r+');
         fwrite($stream, $request->getContent());
+        fseek($stream, 0);
         
-        $psrRequest = $this->createPsrRequest()
+        $psrRequest = $this->getBaseRequest()
             ->withServerParams($request->getServer())
+            ->withBody(new Stream($stream))
             ->withMethod($request->getMethod())
             ->withRequestTarget((string)($uri->withScheme('')->withHost('')->withPort('')->withUserInfo('')))
             ->withCookieParams($request->getCookies())
             ->withUri($uri)
             ->withQueryParams($queryParams)
-            ->withBody(new Stream($stream))
             ->withUploadedFiles($this->convertUploadedFiles($request->getFiles()));
         
-        if ($request->getMethod() !== 'GET' && $request->getParameters() !== null) {
+        if ($request->getMethod() !== 'GET' && !empty($request->getParameters())) {
             $psrRequest = $psrRequest->withParsedBody($request->getParameters());
         }
         
@@ -142,7 +194,7 @@ class Connector extends Client
     {
         return new BrowserKitResponse(
             (string)$psrResponse->getBody(),
-            $psrResponse->getStatusCode(),
+            $psrResponse->getStatusCode() ?: 200,
             $psrResponse->getHeaders()
         );
     }
@@ -183,10 +235,12 @@ class Connector extends Client
             throw new \Exception("Router not set");
         }
         
+        $this->reset(); // Reset before each HTTP request
+        
         $psrRequest = $this->convertRequest($request);
         
         $router = $this->getRouter();
-        $psrResponse = $router->handle($psrRequest, new Response());
+        $psrResponse = $router->handle($psrRequest, $this->getBaseResponse());
         
         return $this->convertResponse($psrResponse);
     }

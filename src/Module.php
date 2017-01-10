@@ -7,6 +7,8 @@ use Codeception\Configuration;
 use Codeception\Lib\Framework;
 use Codeception\TestInterface;
 use Jasny\Codeception\Connector;
+use Jasny\HttpMessage\ServerRequest;
+use Jasny\HttpMessage\Response;
 
 /**
  * Module for running functional tests using Jasny MVC
@@ -23,7 +25,6 @@ class Module extends Framework
      * @var Router 
      */
     public $router;
-    
     
     /**
      * Load the router by including the file.
@@ -51,14 +52,87 @@ class Module extends Framework
         $this->router = $router;
     }
     
+    
+    /**
+     * Enable output buffering
+     * 
+     * @throws \RuntimeException
+     */
+    protected function startOutputBuffering()
+    {
+        ob_start();
+
+        if (ob_get_level() < 1) {
+            throw new \RuntimeException("Failed to start output buffering");
+        }
+    }
+    
+    /**
+     * Disable output buffering
+     */
+    protected function stopOutputBuffering()
+    {
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+    }
+    
+    
+    /**
+     * Initialize the global environment
+     */
+    protected function initGlobalEnvironment()
+    {
+        if (!empty($this->config['global_environment'])) {
+            $this->client->setBaseRequest((new ServerRequest())->withGlobalEnvironment(true));
+            $this->client->setBaseResponse((new Response())->withGlobalEnvironment(true));
+        }
+    }
+    
+    /**
+     * Reset the global environment to how it was.
+     */
+    public function resetGlobalEnvironment()
+    {
+        if (!empty($this->config['global_environment'])) {
+            $this->client->reset();
+        }
+    }
+    
+    
+    /**
+     * Call before suite
+     * 
+     * @param array $settings
+     */
+    public function _beforeSuite($settings = [])
+    {
+        parent::_beforeSuite($settings);
+        
+        if (!empty($this->config['global_environment'])) {
+            $this->startOutputBuffering();
+        }
+    }
+    
+    /**
+     * Call after suite
+     */
+    public function _afterSuite()
+    {
+        if (!empty($this->config['global_environment'])) {
+            $this->stopOutputBuffering();
+        }
+        
+        parent::_afterSuite();
+    }
+    
+    
     /**
      * Initialize the module
      */
     public function _initialize()
     {
         $this->initRouter();
-        
-        parent::_initialize();
     }
     
     
@@ -70,9 +144,9 @@ class Module extends Framework
     public function _before(TestInterface $test)
     {
         $this->client = new Connector();
-        
         $this->client->setRouter($this->router);
-        $this->client->useGlobalEnvironment(!empty($this->config['global_environment']));
+
+        $this->initGlobalEnvironment();
         
         parent::_before($test);
     }
@@ -85,9 +159,11 @@ class Module extends Framework
     public function _after(TestInterface $test)
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
-            session_write_close();
+            session_abort();
         }
         
+        $this->resetGlobalEnvironment();
+
         parent::_after($test);
     }
 }
