@@ -1,5 +1,5 @@
 /vendor/
 tests/_output/*
-.composer.lock
+composer.lock
 tests/_support/_generated/
 

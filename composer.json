@@ -14,7 +14,8 @@
         "jasny/http-message": "^1.0.5",
         "jasny/router": "^1.0",
         "jasny/controller": "^1.0",
-        "codeception/codeception": "^2.2"
+        "codeception/codeception": "^2.2",
+        "mouf/picotainer": "^1.0"
     },
     "require-dev": {
         "twig/twig": "^1.29",

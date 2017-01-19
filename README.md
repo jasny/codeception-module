@@ -29,8 +29,8 @@ Via `composer.json`:
 
 ## Config
 
-* router: Path to file that returns the router
-* global_environment: Bind to the global environment for legacy testing
+* container: Path to file that returns a
+  [`Interop\Container\ContainerInterface`](https://github.com/container-interop/container-interop).
 
 ```yaml
 class_name: FunctionalTester
@@ -38,26 +38,84 @@ modules:
     enabled:
         - \Helper\Functional
         - \Jasny\Codeception\Module:
-              router: tests/_data/router.php
-              global_environment: false
+            container: tests/_data/container.php
         - REST:
-              depends: \Jasny\Codeception\Module
+            depends: \Jasny\Codeception\Module
 ```
 
-Example of `router.php`.
+### Container
+
+The container must contain an item for `Jasny\Router`.
+
+Example of `container.php` using [Picotainer](https://github.com/thecodingmachine/picotainer).
 
 ```php
+use Mouf\Picotainer\Picotainer;
 use Jasny\Router;
 use Jasny\Router\Routes\Glob as Routes;
+use Jasny\HttpMessage\ServerRequest;
+use Jasny\HttpMessage\Response;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
-return new Router(new Routes([
-    '/' => ['controller' => 'foo'],
-    // ...
+return new Picotainer([
+    Router::class => function() {
+        return new Router(new Routes([
+            '/' => ['controller' => 'foo'],
+            // ...
+        ]));
+    }
 ]));
+```
 
+The cointain may have a `Psr\Http\Message\ServerRequestInterface` and `Psr\Http\Message\ResponseInterface` item.
+
+```php
+$container = new Picotainer([
+    Router::class => function() {
+        return new Router(new Routes([
+            '/' => ['controller' => 'foo'],
+            // ...
+        ]));
+    },
+    ServerRequestInterface::class => function() {
+        return new ServerRequest();
+    },
+    ResponseInterface::class => function() {
+        return new Response()
+    }
+]));
+```
+
+### Legacy code
+
+The Jasny PSR-7 http message implementation is capable of dealing with legacy code by [binding to the global
+environment](https://github.com/jasny/http-message#testing-legacy-code).
+
+This allows testing of code that accesses superglobals like `$_GET` and `$_POST` and outputs using `echo` and
+`headers()`.
+
+Use `withGlobalEnvironment(true)` for both request and response object. The Codeception module will make sure
+output buffering starts and everything is restored after each test.
+
+```php
+return new Picotainer([
+    Router::class => function() {
+        return new Router(new Routes([
+            '/' => ['controller' => 'foo'],
+            // ...
+        ]));
+    },
+    ServerRequestInterface::class => function() {
+        return (new ServerRequest())->withGlobalEnvironment(true);
+    },
+    ResponseInterface::class => function() {
+        return (new Response())->withGlobalEnvironment(true)
+    }
+]));
 ```
 
 ## API
 
-* router -  instance of `\Jasny\Router`
+* router - instance of `Jasny\Router`
 * client - [BrowserKit](http://symfony.com/doc/current/components/browser_kit.html) client

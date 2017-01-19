@@ -7,8 +7,9 @@ use Codeception\Configuration;
 use Codeception\Lib\Framework;
 use Codeception\TestInterface;
 use Jasny\Codeception\Connector;
-use Jasny\HttpMessage\ServerRequest;
-use Jasny\HttpMessage\Response;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Interop\Container\ContainerInterface;
 
 /**
  * Module for running functional tests using Jasny MVC
@@ -19,39 +20,72 @@ class Module extends Framework
      * Required configuration fields
      * @var array
      */
-    protected $requiredFields = ['router'];
+    protected $requiredFields = ['container'];
     
     /**
-     * @var Router 
+     * Application container
+     * @var ContainerInterface 
      */
-    public $router;
+    protected $container;
     
     /**
-     * Load the router by including the file.
+     * Module started output buffering
+     * @var boolean
+     */
+    protected $outputBuffering = false;
+    
+    
+    /**
+     * Load the container by including the file.
      * @codeCoverageIgnore
      * 
      * @param string $file
-     * @return Router
+     * @return ContainerInterface
      */
-    protected function loadRouter($file)
+    protected function loadContainer($file)
     {
         return include $file;
     }
     
     /**
-     * Initialize the router
+     * Initialize the container
      */
-    protected function initRouter()
+    protected function initContainer()
     {
-        $router = $this->loadRouter(Configuration::projectDir() . $this->config['router']);
-        
-        if (!$router instanceof Router) {
-            throw new \UnexpectedValueException("Failed to get router from '{$this->config['router']}'");
+        $container = $this->loadContainer(Configuration::projectDir() . $this->config['container']);
+
+        if (!$container instanceof ContainerInterface) {
+            throw new \UnexpectedValueException("Failed to get a container from '{$this->config['container']}'");
+        }
+
+        $this->container = $container;
+    }
+
+    /**
+     * Return the application container
+     * 
+     * @throws \BadMethodCallException
+     */
+    public function getContainer()
+    {
+        if (!isset($this->container)) {
+            throw new \BadMethodCallException("Container isn't initialized");
         }
         
-        $this->router = $router;
+        return $this->container;
     }
     
+    /**
+     * Check if the response writes to the output buffer
+     * 
+     * @return boolean
+     */
+    protected function usesOutputBuffer()
+    {
+        return
+            $this->getContainer()->has(ResponseInterface::class) &&
+            $this->getContainer()->get(ResponseInterface::class)->getBody()->getMetadata('uri') === 'php://output';
+    }
     
     /**
      * Enable output buffering
@@ -60,9 +94,9 @@ class Module extends Framework
      */
     protected function startOutputBuffering()
     {
-        ob_start();
+        $this->obStart();
 
-        if (ob_get_level() < 1) {
+        if ($this->obGetLevel() < 1) {
             throw new \RuntimeException("Failed to start output buffering");
         }
     }
@@ -72,33 +106,19 @@ class Module extends Framework
      */
     protected function stopOutputBuffering()
     {
-        if (ob_get_level() > 0) {
-            ob_end_clean();
+        if ($this->obGetLevel() > 0) {
+            $this->obEndClean();
         }
     }
-    
+
     
     /**
-     * Initialize the global environment
+     * Initialize the module
      */
-    protected function initGlobalEnvironment()
+    public function _initialize()
     {
-        if (!empty($this->config['global_environment'])) {
-            $this->client->setBaseRequest((new ServerRequest())->withGlobalEnvironment(true));
-            $this->client->setBaseResponse((new Response())->withGlobalEnvironment(true));
-        }
+        $this->initContainer();
     }
-    
-    /**
-     * Reset the global environment to how it was.
-     */
-    public function resetGlobalEnvironment()
-    {
-        if (!empty($this->config['global_environment'])) {
-            $this->client->reset();
-        }
-    }
-    
     
     /**
      * Call before suite
@@ -109,7 +129,7 @@ class Module extends Framework
     {
         parent::_beforeSuite($settings);
         
-        if (!empty($this->config['global_environment'])) {
+        if ($this->usesOutputBuffer()) {
             $this->startOutputBuffering();
         }
     }
@@ -119,22 +139,12 @@ class Module extends Framework
      */
     public function _afterSuite()
     {
-        if (!empty($this->config['global_environment'])) {
+        if ($this->usesOutputBuffer()) {
             $this->stopOutputBuffering();
         }
         
         parent::_afterSuite();
     }
-    
-    
-    /**
-     * Initialize the module
-     */
-    public function _initialize()
-    {
-        $this->initRouter();
-    }
-    
     
     /**
      * Before each test
@@ -143,10 +153,18 @@ class Module extends Framework
      */
     public function _before(TestInterface $test)
     {
+        $container = $this->getContainer();
+        
         $this->client = new Connector();
-        $this->client->setRouter($this->router);
+        $this->client->setRouter($container->get(Router::class));
 
-        $this->initGlobalEnvironment();
+        if ($container->has(ServerRequestInterface::class)) {
+            $this->client->setBaseRequest($container->get(ServerRequestInterface::class));
+        }
+        
+        if ($container->has(ResponseInterface::class)) {
+            $this->client->setBaseResponse($container->get(ResponseInterface::class));
+        }
         
         parent::_before($test);
     }
@@ -158,12 +176,64 @@ class Module extends Framework
      */
     public function _after(TestInterface $test)
     {
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            session_abort();
+        if ($this->sessionStatus() === PHP_SESSION_ACTIVE) {
+            $this->sessionAbort();
         }
         
-        $this->resetGlobalEnvironment();
+        if (isset($this->client)) {
+            $this->client->reset();
+        }
 
         parent::_after($test);
+    }
+    
+    
+    /**
+     * Wrapper around `ob_start()`
+     * @codeCoverageIgnore
+     */
+    protected function obStart()
+    {
+        ob_start();
+    }
+    
+    /**
+     * Wrapper around `ob_get_level()`
+     * @codeCoverageIgnore
+     * 
+     * @return int
+     */
+    protected function obGetLevel()
+    {
+        return ob_get_level();
+    }
+    
+    /**
+     * Wrapper around `ob_end_clean()`
+     * @codeCoverageIgnore
+     */
+    protected function obEndClean()
+    {
+        ob_end_clean();
+    }
+    
+    /**
+     * Wrapper around `session_status()`
+     * @codeCoverageIgnore
+     * 
+     * @return int
+     */
+    protected function sessionStatus()
+    {
+        return session_status();
+    }
+    
+    /**
+     * Wrapper around `session_abort()`
+     * @codeCoverageIgnore
+     */
+    protected function sessionAbort()
+    {
+        return session_abort();
     }
 }
