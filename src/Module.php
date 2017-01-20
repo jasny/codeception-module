@@ -94,7 +94,9 @@ class Module extends Framework
      */
     protected function startOutputBuffering()
     {
-        $this->obStart();
+        if ($this->obGetLevel() === 0) {
+            $this->obStart();
+        }
 
         if ($this->obGetLevel() < 1) {
             throw new \RuntimeException("Failed to start output buffering");

@@ -3,6 +3,6 @@ modules:
     enabled:
         - \Helper\Functional
         - \Jasny\Codeception\Module:
-            container: tests/_data/container.php
+              container: tests/_data/legacy_container.php
         - REST:
-            depends: \Jasny\Codeception\Module
+              depends: \Jasny\Codeception\Module

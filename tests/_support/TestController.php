@@ -53,8 +53,6 @@ class TestController extends Controller
     
     /**
      * Show a view
-     * 
-     * @return type
      */
     public function defaultAction()
     {

@@ -10,6 +10,7 @@ use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\UploadedFile;
 use Jasny\HttpMessage\Uri;
 use Jasny\HttpMessage\Stream;
+use Jasny\HttpMessage\OutputBufferStream;
 use Jasny\Router;
 use Symfony\Component\BrowserKit\Client;
 use Symfony\Component\BrowserKit\Request as BrowserKitRequest;
@@ -118,7 +119,8 @@ class Connector extends Client
     }
     
     /**
-     * Reset the request
+     * Reset the request and response.
+     * This is only required when the request and/or response are bound to the global environment.
      */
     public function reset()
     {
@@ -128,6 +130,11 @@ class Connector extends Client
 
         if (isset($this->baseResponse) && $this->baseResponse instanceof Response && $this->baseResponse->isStale()) {
             $this->baseResponse = $this->baseResponse->revive();
+        }
+        
+        // Clear output buffer
+        if (isset($this->baseResponse) && $this->baseResponse->getBody() instanceof OutputBufferStream) {
+            $this->baseResponse = $this->baseResponse->withBody(clone $this->baseResponse->getBody());
         }
     }
 

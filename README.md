@@ -53,10 +53,6 @@ Example of `container.php` using [Picotainer](https://github.com/thecodingmachin
 use Mouf\Picotainer\Picotainer;
 use Jasny\Router;
 use Jasny\Router\Routes\Glob as Routes;
-use Jasny\HttpMessage\ServerRequest;
-use Jasny\HttpMessage\Response;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\ResponseInterface;
 
 return new Picotainer([
     Router::class => function() {
@@ -65,13 +61,21 @@ return new Picotainer([
             // ...
         ]));
     }
-]));
+]);
 ```
 
 The cointain may have a `Psr\Http\Message\ServerRequestInterface` and `Psr\Http\Message\ResponseInterface` item.
 
 ```php
-$container = new Picotainer([
+use Mouf\Picotainer\Picotainer;
+use Jasny\Router;
+use Jasny\Router\Routes\Glob as Routes;
+use Jasny\HttpMessage\ServerRequest;
+use Jasny\HttpMessage\Response;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
+return new new Picotainer([
     Router::class => function() {
         return new Router(new Routes([
             '/' => ['controller' => 'foo'],
@@ -82,9 +86,9 @@ $container = new Picotainer([
         return new ServerRequest();
     },
     ResponseInterface::class => function() {
-        return new Response()
+        return new Response();
     }
-]));
+]);
 ```
 
 ### Legacy code
@@ -99,6 +103,14 @@ Use `withGlobalEnvironment(true)` for both request and response object. The Code
 output buffering starts and everything is restored after each test.
 
 ```php
+use Mouf\Picotainer\Picotainer;
+use Jasny\Router;
+use Jasny\Router\Routes\Glob as Routes;
+use Jasny\HttpMessage\ServerRequest;
+use Jasny\HttpMessage\Response;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
 return new Picotainer([
     Router::class => function() {
         return new Router(new Routes([
@@ -110,9 +122,9 @@ return new Picotainer([
         return (new ServerRequest())->withGlobalEnvironment(true);
     },
     ResponseInterface::class => function() {
-        return (new Response())->withGlobalEnvironment(true)
+        return (new Response())->withGlobalEnvironment(true);
     }
-]));
+]);
 ```
 
 ## API
