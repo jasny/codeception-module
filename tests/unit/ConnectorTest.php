@@ -6,6 +6,7 @@ use Jasny\Codeception\Connector;
 use Jasny\Router;
 use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\Response;
+use Jasny\HttpMessage\OutputBufferStream;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\BrowserKit\Response as BrowserKitResponse;
 use org\bovigo\vfs\vfsStream;
@@ -31,6 +32,102 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $this->root = vfsStream::setup('root', null, [
             'one.txt' => 'File Uno'
         ]);
+    }
+    
+    
+    public function testSetRouter()
+    {
+        $connector = new Connector();
+        $router = $this->createMock(Router::class);
+        
+        $connector->setRouter($router);
+        
+        $this->assertSame($router, $connector->getRouter());
+    }
+    
+    public function testSetBaseRequest()
+    {
+        $connector = new Connector();
+        $request = $this->createMock(ServerRequest::class);
+        
+        $connector->setBaseRequest($request);
+        
+        $this->assertSame($request, $connector->getBaseRequest());
+    }
+    
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Unable to set base request: ServerRequest is stale
+     */
+    public function testSetBaseRequestWithStale()
+    {
+        $connector = new Connector();
+        
+        $request = $this->createMock(ServerRequest::class);
+        $request->method('isStale')->willReturn(true);
+        
+        $connector->setBaseRequest($request);
+        
+        $this->assertSame($request, $connector->getBaseRequest());
+    }
+    
+    public function testSetResponse()
+    {
+        $connector = new Connector();
+        $response = $this->createMock(Response::class);
+        
+        $connector->setBaseResponse($response);
+        
+        $this->assertSame($response, $connector->getBaseResponse());
+    }
+    
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Unable to set base response: Response is stale
+     */
+    public function testSetResponseWithStale()
+    {
+        $connector = new Connector();
+        
+        $response = $this->createMock(Response::class);
+        $response->method('isStale')->willReturn(true);
+        
+        $connector->setBaseResponse($response);
+    }
+    
+    
+    public function testReset()
+    {
+        $connector = new Connector();
+        
+        $revivedRequest = $this->createMock(ServerRequest::class);
+        $request = $this->createMock(ServerRequest::class);
+        $request->expects($this->exactly(2))->method('isStale')->willReturnOnConsecutiveCalls(false, true);
+        $request->expects($this->once())->method('revive')->willReturn($revivedRequest);
+        
+        $revivedResponse = $this->createMock(Response::class);
+        $response = $this->createMock(Response::class);
+        $response->expects($this->exactly(2))->method('isStale')->willReturnOnConsecutiveCalls(false, true);
+        $response->expects($this->once())->method('revive')->willReturn($revivedResponse);
+        
+        $newResponse = $this->createMock(Response::class);
+        $body = $this->createMock(OutputBufferStream::class);
+        $revivedResponse->method('getBody')->willReturn($body);
+        $revivedResponse->expects($this->once())->method('withBody')->with(
+            $this->callback(function ($newBody) use ($body) {
+                $this->assertInstanceOf(get_class($body), $newBody);
+                $this->assertNotSame($body, $newBody);
+                return true;
+            })
+        )->willReturn($newResponse);
+        
+        $connector->setBaseRequest($request);
+        $connector->setBaseResponse($response);
+        
+        $connector->reset();
+        
+        $this->assertSame($revivedRequest, $connector->getBaseRequest());
+        $this->assertSame($newResponse, $connector->getBaseResponse());
     }
     
     
@@ -146,4 +243,14 @@ class ConnectorTest extends \Codeception\TestCase\Test
             'Custom-Header' => 'abc'
         ], $response->getHeaders());
     }
+    
+    /**
+     * @expectedException BadMethodCallException
+     * @expectedExceptionMessage Router not set
+     */
+    public function testRequestWithoutRouter()
+    {
+        $connector = new Connector();
+        $connector->request('GET', '/foo');
+    }   
 }
