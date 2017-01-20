@@ -5,7 +5,6 @@ namespace Jasny\Codeception;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
-use Psr\Http\Message\UriInterface;
 use Jasny\HttpMessage\Response;
 use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\UploadedFile;

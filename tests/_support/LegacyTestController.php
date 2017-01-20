@@ -11,6 +11,35 @@ class LegacyTestController extends Controller
     use Controller\View\Twig;
     
     /**
+     * Group data as provided by $_FILES
+     * 
+     * @param array   $array
+     * @return array
+     */
+    protected function groupUploadedFiles(array $array)
+    {
+        $files = [];
+        
+        foreach ($array as $key => $values) {
+            if (!is_array($values['error'])) {
+                $files[$key] = $values;
+                continue;
+            }
+            
+            $rearranged = [];
+            foreach ($values as $property => $propertyValues) {
+                foreach ($propertyValues as $subkey => $value) {
+                    $rearranged[$subkey][$property] = $value;
+                }
+            }
+            
+            $files[$key] = $this->groupUploadedFiles($rearranged);
+        }
+        
+        return $files;
+    }
+    
+    /**
      * Get path of the view files
      *
      * @return string
@@ -54,7 +83,7 @@ class LegacyTestController extends Controller
             'rawBody' => (string)$request->getBody(), // Using php://input won't work, even in legacy mode
             'headers' => $request->getHeaders(),
             'X-Auth-Token' => isset($_SERVER['HTTP_X_AUTH_TOKEN']) ? $_SERVER['HTTP_X_AUTH_TOKEN'] : '',
-            'files' => $_FILES
+            'files' => $this->groupUploadedFiles($_FILES)
         ], 'json');
     }
     
