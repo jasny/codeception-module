@@ -23,16 +23,19 @@ class Module extends Framework
     protected $requiredFields = ['container'];
     
     /**
-     * Application container
-     * @var ContainerInterface 
+     * @var Router
      */
-    protected $container;
+    public $router;
     
     /**
-     * Module started output buffering
-     * @var boolean
+     * @var ServerRequestInterface 
      */
-    protected $outputBuffering = false;
+    public $baseRequest;
+    
+    /**
+     * @var ResponseInterface 
+     */
+    public $baseResponse;
     
     
     /**
@@ -48,7 +51,9 @@ class Module extends Framework
     }
     
     /**
-     * Initialize the container
+     * Get the container.
+     * 
+     * @return ContainerInterface
      */
     protected function initContainer()
     {
@@ -58,21 +63,7 @@ class Module extends Framework
             throw new \UnexpectedValueException("Failed to get a container from '{$this->config['container']}'");
         }
 
-        $this->container = $container;
-    }
-
-    /**
-     * Return the application container
-     * 
-     * @throws \BadMethodCallException
-     */
-    public function getContainer()
-    {
-        if (!isset($this->container)) {
-            throw new \BadMethodCallException("Container isn't initialized");
-        }
-        
-        return $this->container;
+        return $container;
     }
     
     /**
@@ -82,9 +73,7 @@ class Module extends Framework
      */
     protected function usesOutputBuffer()
     {
-        return
-            $this->getContainer()->has(ResponseInterface::class) &&
-            $this->getContainer()->get(ResponseInterface::class)->getBody()->getMetadata('uri') === 'php://output';
+        return isset($this->baseRequest) && $this->baseRequest->getBody()->getMetadata('uri') === 'php://output';
     }
     
     /**
@@ -108,9 +97,7 @@ class Module extends Framework
      */
     protected function stopOutputBuffering()
     {
-        if ($this->obGetLevel() > 0) {
-            $this->obEndClean();
-        }
+        $this->obClean();
     }
 
     
@@ -119,7 +106,17 @@ class Module extends Framework
      */
     public function _initialize()
     {
-        $this->initContainer();
+        $container = $this->initContainer();
+        
+        $this->router = $container->get(Router::class);
+
+        if ($container->has(ServerRequestInterface::class)) {
+            $this->baseRequest = $container->get(ServerRequestInterface::class);
+        }
+        
+        if ($container->has(ResponseInterface::class)) {
+            $this->baseResponse = $container->get(ResponseInterface::class);
+        }
     }
     
     /**
@@ -155,17 +152,15 @@ class Module extends Framework
      */
     public function _before(TestInterface $test)
     {
-        $container = $this->getContainer();
-        
         $this->client = new Connector();
-        $this->client->setRouter($container->get(Router::class));
+        $this->client->setRouter($this->router);
 
-        if ($container->has(ServerRequestInterface::class)) {
-            $this->client->setBaseRequest($container->get(ServerRequestInterface::class));
+        if (isset($this->baseRequest)) {
+            $this->client->setBaseRequest($this->baseRequest);
         }
         
-        if ($container->has(ResponseInterface::class)) {
-            $this->client->setBaseResponse($container->get(ResponseInterface::class));
+        if (isset($this->baseResponse)) {
+            $this->client->setBaseResponse($this->baseResponse);
         }
         
         parent::_before($test);
@@ -181,10 +176,19 @@ class Module extends Framework
         if ($this->sessionStatus() === PHP_SESSION_ACTIVE) {
             $this->sessionAbort();
         }
-        
+
         if (isset($this->client)) {
             $this->client->reset();
+            
+            if (isset($this->baseRequest)) {
+                $this->baseRequest = $this->client->getBaseRequest();
+            }
+            
+            if (isset($this->baseResponse)) {
+                $this->baseResponse = $this->client->getBaseResponse();
+            }
         }
+
 
         parent::_after($test);
     }
@@ -211,12 +215,12 @@ class Module extends Framework
     }
     
     /**
-     * Wrapper around `ob_end_clean()`
+     * Wrapper around `ob_clean()`
      * @codeCoverageIgnore
      */
-    protected function obEndClean()
+    protected function obClean()
     {
-        ob_end_clean();
+        ob_clean();
     }
     
     /**

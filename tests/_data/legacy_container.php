@@ -13,9 +13,9 @@ ob_start();
 return new Picotainer([
     Router::class => function() {
         return new Router(new Routes([
-            '/' => ['controller' => 'test'],
-            '/api/ping' => ['controller' => 'test', 'action' => 'ping'],
-            '/rest' => ['controller' => 'test', 'action' => 'rest']
+            '/' => ['controller' => 'legacy-test'],
+            '/api/ping' => ['controller' => 'legacy-test', 'action' => 'ping'],
+            '/rest' => ['controller' => 'legacy-test', 'action' => 'rest']
         ]));
     },
     ServerRequestInterface::class => function() {

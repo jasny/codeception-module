@@ -5,6 +5,7 @@ namespace Jasny\Codeception;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\UploadedFileInterface;
+use Psr\Http\Message\UriInterface;
 use Jasny\HttpMessage\Response;
 use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\UploadedFile;
@@ -100,7 +101,7 @@ class Connector extends Client
         if ($response instanceof Response && $response->isStale()) {
             throw new \RuntimeException("Unable to set base response: Response is stale");
         }
-            
+        
         $this->baseResponse = $response;
     }
     
@@ -161,6 +162,35 @@ class Connector extends Client
     }
     
     /**
+     * Get additional server params from request.
+     * @internal It would be nicer if this was solved by Jasny Http Message
+     * 
+     * @param ServerRequestInterface $psrRequest
+     * @return array
+     */
+    protected function determineServerParams(ServerRequestInterface $psrRequest)
+    {
+        $server = [
+            'REQUEST_METHOD' => $psrRequest->getMethod(),
+            'QUERY_STRING' => http_build_query($psrRequest->getQueryParams()),
+            'REQUEST_URI' => $psrRequest->getRequestTarget()
+        ];
+        
+        foreach ($psrRequest->getHeaders() as $name => $values) {
+            $value = end($values);
+            $key = strtoupper(str_replace('-', '_', $name));
+            
+            if ($key !== 'CONTENT_TYPE' && $key !== 'CONTENT_LENGTH') {
+                $key = "HTTP_" . $key;
+            }
+            
+            $server[$key] = $value;
+        }
+        
+        return $server;
+    }
+    
+    /**
      * Convert a codeception request to a Jasny PSR-7 server request
      * 
      * @param BrowserKitRequest $request
@@ -175,7 +205,6 @@ class Connector extends Client
         fseek($stream, 0);
         
         $psrRequest = $this->getBaseRequest()
-            ->withServerParams($request->getServer())
             ->withBody(new Stream($stream))
             ->withMethod($request->getMethod())
             ->withRequestTarget((string)($uri->withScheme('')->withHost('')->withPort('')->withUserInfo('')))
@@ -186,6 +215,11 @@ class Connector extends Client
         
         if ($request->getMethod() !== 'GET' && !empty($request->getParameters())) {
             $psrRequest = $psrRequest->withParsedBody($request->getParameters());
+        }
+        
+        if ($psrRequest instanceof ServerRequest) {
+            $params = $request->getServer() + $this->determineServerParams($psrRequest);
+            $psrRequest = $psrRequest->withServerParams($params);
         }
         
         return $psrRequest;
