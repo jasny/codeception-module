@@ -31,11 +31,6 @@ class ModuleTest extends \Codeception\Test\Unit
      */
     protected $module;
 
-    /**
-     * @var Picotainer|MockObject
-     */
-    protected $container;
-
     
     /**
      * Create a module as partial mock
@@ -49,12 +44,9 @@ class ModuleTest extends \Codeception\Test\Unit
         $config += ['container' => ''];
         
         $this->module = $this->getMockBuilder(Module::class)
-            ->setMethods(['loadContainer', 'obStart', 'obGetLevel', 'obEndClean', 'sessionStatus', 'sessionAbort'])
+            ->setMethods(['loadContainer', 'obStart', 'obGetLevel', 'obClean', 'sessionStatus', 'sessionAbort'])
             ->setConstructorArgs([$moduleContainer, $config])
             ->getMock();
-        
-        $this->container = empty($config['container']) ? $this->createMock(Picotainer::class) : null;
-        $this->setPrivateProperty($this->module, 'container', $this->container);
     }
 
     
@@ -64,28 +56,19 @@ class ModuleTest extends \Codeception\Test\Unit
     }
     
     
-    public function testGetContainer()
-    {
-        $this->assertSame($this->container, $this->module->getContainer());
-    }
-    
-    /**
-     * @expectedException BadMethodCallException
-     * @expectedExceptionMessage Container isn't initialized
-     */
-    public function testGetContainerUninitialized()
-    {
-        $this->createModule(['container' => 'tests/_data/container.php']);
-        
-        $this->module->getContainer();
-    }
-    
-    
     public function testInitialize()
     {
         $this->createModule(['container' => 'tests/_data/container.php']);
         
+        $router = $this->createMock(Router::class);
+        
         $container = $this->createMock(Picotainer::class);
+        $container->expects($this->any())->method('has')->willReturnMap([
+            [Router::class, true],
+        ]);
+        $container->expects($this->once())->method('get')->willReturnMap([
+            [Router::class, $router],
+        ]);
         
         $this->module->expects($this->once())->method('loadContainer')
             ->with(codecept_data_dir('container.php'))
@@ -93,7 +76,49 @@ class ModuleTest extends \Codeception\Test\Unit
         
         $this->module->_initialize();
         
-        $this->assertSame($container, $this->module->getContainer());
+        $this->assertSame($router, $this->module->router);
+    }
+    
+    public function testInitializeWithRequestResponse()
+    {
+        $this->createModule(['container' => 'tests/_data/container.php']);
+        
+        $router = $this->createMock(Router::class);
+        $request = $this->createMock(ServerRequestInterface::class);
+        $response = $this->createMock(ResponseInterface::class);
+        
+        $container = $this->createMock(Picotainer::class);
+        $container->expects($this->any())->method('has')->willReturn(true);
+        $container->expects($this->exactly(3))->method('get')->willReturnMap([
+            [Router::class, $router],
+            [ServerRequestInterface::class, $request],
+            [ResponseInterface::class, $response]
+        ]);
+        
+        $this->module->expects($this->once())->method('loadContainer')
+            ->with(codecept_data_dir('container.php'))
+            ->willReturn($container);
+        
+        $this->module->_initialize();
+        
+        $this->assertSame($router, $this->module->router);
+        $this->assertSame($request, $this->module->baseRequest);
+        $this->assertSame($response, $this->module->baseResponse);
+    }
+    
+    /**
+     * @expectedException UnexpectedValueException
+     * @expectedExceptionMessage Failed to get a container
+     */
+    public function testInitializeWithInvalidContainer()
+    {
+        $this->createModule(['container' => 'tests/_data/container.php']);
+        
+        $this->module->expects($this->once())->method('loadContainer')
+            ->with(codecept_data_dir('container.php'))
+            ->willReturn(true);
+        
+        $this->module->_initialize();
     }
     
     
@@ -130,10 +155,9 @@ class ModuleTest extends \Codeception\Test\Unit
     public function testBeforeSuite($response, $invoke)
     {
         $this->module->expects(clone $invoke)->method('obStart');
-        $this->module->expects(clone $invoke)->method('obGetLevel')->willReturn(1);
+        $this->module->method('obGetLevel')->willReturnOnConsecutiveCalls(0, 1);
 
-        $this->container->method('has')->with(ResponseInterface::class)->willReturn(isset($response));
-        $this->container->method('get')->with(ResponseInterface::class)->willReturn($response);
+        $this->module->baseResponse = $response;
 
         $this->module->_beforeSuite();
     }
@@ -145,11 +169,9 @@ class ModuleTest extends \Codeception\Test\Unit
     public function testBeforeSuiteFailObStart()
     {
         $this->module->expects($this->once())->method('obStart');
-        $this->module->expects($this->once())->method('obGetLevel')->willReturn(0);
+        $this->module->expects($this->exactly(2))->method('obGetLevel')->willReturn(0);
 
-        $this->container->method('has')->with(ResponseInterface::class)->willReturn(true);
-        $this->container->method('get')->with(ResponseInterface::class)
-            ->willReturn($this->createResponseMockWithStream('php://output'));
+        $this->module->baseResponse = $this->createResponseMockWithStream('php://output');
 
         $this->module->_beforeSuite();
     }
@@ -162,11 +184,10 @@ class ModuleTest extends \Codeception\Test\Unit
      */
     public function testAfterSuite($response, $invoke)
     {
-        $this->module->expects(clone $invoke)->method('obGetLevel')->willReturn(1);
-        $this->module->expects(clone $invoke)->method('obEndClean');
+        $this->module->method('obGetLevel')->willReturn(1);
+        $this->module->expects(clone $invoke)->method('obClean');
 
-        $this->container->method('has')->with(ResponseInterface::class)->willReturn(isset($response));
-        $this->container->method('get')->with(ResponseInterface::class)->willReturn($response);
+        $this->module->baseResponse = $response;
 
         $this->module->_afterSuite();
     }
@@ -193,17 +214,9 @@ class ModuleTest extends \Codeception\Test\Unit
         $test = $this->createMock(TestInterface::class);
         $router = $this->createMock(Router::class);
         
-        $this->container->method('has')->willReturnMap([
-            [Router::class, true],
-            [ServerRequestInterface::class, isset($request)],
-            [ResponseInterface::class, isset($response)]
-        ]);
-        
-        $this->container->method('get')->willReturnMap([
-            [Router::class, $router],
-            [ServerRequestInterface::class, $request],
-            [ResponseInterface::class, $response]
-        ]);
+        $this->module->router = $router;
+        $this->module->baseRequest = $request;
+        $this->module->baseResponse = $response;
 
         $this->module->_before($test);
         
@@ -246,12 +259,22 @@ class ModuleTest extends \Codeception\Test\Unit
     public function testAfterForClientReset()
     {
         $test = $this->createMock(TestInterface::class);
+        $request = $this->createMock(ServerRequestInterface::class);
+        $response = $this->createMock(ResponseInterface::class);
         
         $connector = $this->createMock(Connector::class);
         $connector->expects($this->once())->method('reset');
         
-        $this->setPrivateProperty($this->module, 'client', $connector);
+        $connector->expects($this->once())->method('getBaseRequest')->willReturn($request);
+        $connector->expects($this->once())->method('getBaseResponse')->willReturn($response);
+        
+        $this->module->client = $connector;
+        $this->module->baseRequest = $this->createMock(ServerRequestInterface::class);
+        $this->module->baseResponse = $this->createMock(ResponseInterface::class);
         
         $this->module->_after($test);
+        
+        $this->assertSame($request, $this->module->baseRequest);
+        $this->assertSame($response, $this->module->baseResponse);
     }
 }

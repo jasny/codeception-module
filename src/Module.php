@@ -73,7 +73,7 @@ class Module extends Framework
      */
     protected function usesOutputBuffer()
     {
-        return isset($this->baseRequest) && $this->baseRequest->getBody()->getMetadata('uri') === 'php://output';
+        return isset($this->baseResponse) && $this->baseResponse->getBody()->getMetadata('uri') === 'php://output';
     }
     
     /**
