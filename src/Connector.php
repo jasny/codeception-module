@@ -195,7 +195,7 @@ class Connector extends Client
         $baseRequest = $this->getBaseRequest();
         
         if ($baseRequest instanceof ServerRequest) {
-            $serverParams = $this->determineServerParams($request, $uri, $queryParams);
+            $serverParams = $this->determineServerParams($request, $uri, (array)$queryParams);
             $baseRequest = $baseRequest->withServerParams($request->getServer() + $serverParams);
         }
         
@@ -205,7 +205,7 @@ class Connector extends Client
             ->withRequestTarget((string)($uri->withScheme('')->withHost('')->withPort('')->withUserInfo('')))
             ->withCookieParams($request->getCookies())
             ->withUri($uri)
-            ->withQueryParams($queryParams)
+            ->withQueryParams((array)$queryParams)
             ->withUploadedFiles($this->convertUploadedFiles($request->getFiles()));
         
         if ($request->getMethod() !== 'GET' && !empty($request->getParameters())) {
