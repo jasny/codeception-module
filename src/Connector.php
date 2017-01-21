@@ -44,7 +44,6 @@ class Connector extends Client
      * Set the router
      * 
      * @param Router $router
-     * @param string $legacy
      */
     public function setRouter(Router $router)
     {
@@ -150,7 +149,7 @@ class Connector extends Client
     {
         $uri = new Uri($request->getUri());
         
-        $queryParams = null;
+        $queryParams = [];
         parse_str($uri->getQuery(), $queryParams);
         
         if ($request->getMethod() === 'GET') {

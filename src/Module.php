@@ -177,7 +177,7 @@ class Module extends Framework
             $this->sessionAbort();
         }
 
-        if (isset($this->client)) {
+        if (isset($this->client) && $this->client instanceof Connector) {
             $this->client->reset();
             
             if (isset($this->baseRequest)) {
@@ -240,6 +240,6 @@ class Module extends Framework
      */
     protected function sessionAbort()
     {
-        return session_abort();
+        session_abort();
     }
 }
