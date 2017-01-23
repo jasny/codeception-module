@@ -76,7 +76,7 @@ class RequestConvertor
      * @param ServerRequestInterface $baseRequest
      * @param BrowserKitRequest      $request
      * @param resource               $stream
-     * @param string                 $uri
+     * @param UriInterface           $uri
      * @param array                  $queryParams
      * @return ServerRequestInterface
      */
@@ -84,7 +84,7 @@ class RequestConvertor
         ServerRequestInterface $baseRequest,
         BrowserKitRequest $request,
         $stream,
-        $uri,
+        UriInterface $uri,
         array $queryParams
     ) {
         $psrRequest = $baseRequest
