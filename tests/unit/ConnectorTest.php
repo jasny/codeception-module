@@ -3,11 +3,15 @@
 namespace Jasny\Codeception;
 
 use Jasny\Codeception\Connector;
+use Jasny\Codeception\RequestConvertor;
+use Jasny\Codeception\ResponseConvertor;
 use Jasny\Router;
 use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\Response;
 use Jasny\HttpMessage\OutputBufferStream;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Symfony\Component\BrowserKit\Request as BrowserKitRequest;
 use Symfony\Component\BrowserKit\Response as BrowserKitResponse;
 use org\bovigo\vfs\vfsStream;
 
@@ -45,6 +49,14 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $this->assertSame($router, $connector->getRouter());
     }
     
+    public function testGetBaseRequest()
+    {
+        $connector = new Connector();
+        $request = $connector->getBaseRequest();
+        
+        $this->assertInstanceOf(ServerRequest::class, $request);
+    }
+    
     public function testSetBaseRequest()
     {
         $connector = new Connector();
@@ -71,7 +83,15 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $this->assertSame($request, $connector->getBaseRequest());
     }
     
-    public function testSetResponse()
+    public function testGetBaseResponse()
+    {
+        $connector = new Connector();
+        $request = $connector->getBaseResponse();
+        
+        $this->assertInstanceOf(Response::class, $request);
+    }
+    
+    public function testSetBaseResponse()
     {
         $connector = new Connector();
         $response = $this->createMock(Response::class);
@@ -85,7 +105,7 @@ class ConnectorTest extends \Codeception\TestCase\Test
      * @expectedException RuntimeException
      * @expectedExceptionMessage Unable to set base response: Response is stale
      */
-    public function testSetResponseWithStale()
+    public function testSetBaseResponseWithStale()
     {
         $connector = new Connector();
         
@@ -93,6 +113,43 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $response->method('isStale')->willReturn(true);
         
         $connector->setBaseResponse($response);
+    }
+    
+    
+    public function testSetRequestConvertor()
+    {
+        $connector = new Connector();
+        $convertor = $this->createMock(RequestConvertor::class);
+        
+        $connector->setRequestConvertor($convertor);
+        
+        $this->assertSame($convertor, $connector->getRequestConvertor());
+    }
+    
+    public function testGetRequestConvertor()
+    {
+        $connector = new Connector();
+        $convertor = $connector->getRequestConvertor();
+        
+        $this->assertInstanceOf(RequestConvertor::class, $convertor);
+    }
+    
+    public function testSetResponseConvertor()
+    {
+        $connector = new Connector();
+        $convertor = $this->createMock(ResponseConvertor::class);
+        
+        $connector->setResponseConvertor($convertor);
+        
+        $this->assertSame($convertor, $connector->getResponseConvertor());
+    }
+    
+    public function testGetResponseConvertor()
+    {
+        $connector = new Connector();
+        $convertor = $connector->getResponseConvertor();
+        
+        $this->assertInstanceOf(ResponseConvertor::class, $convertor);
     }
     
     
@@ -132,53 +189,34 @@ class ConnectorTest extends \Codeception\TestCase\Test
     
     
     /**
-     * @param ServerRequest $request
+     * @param BrowserKitRequest $request
+     * @param string            $method
      * @return boolean
      */
-    public function assertPsrGetRequest($request)
+    public function assertRequest($request, $method)
     {
-        $this->assertInstanceOf(ServerRequest::class, $request);
+        $this->assertInstanceOf(BrowserKitRequest::class, $request);
         
-        $this->assertEquals('GET', $request->getMethod());
-        $this->assertEquals('http://www.example.com/foo?bar=1&color=blue&mood=sunny', (string)$request->getUri());
+        $this->assertEquals($method, $request->getMethod());
+        $this->assertEquals('http://www.example.com/foo?bar=1', $request->getUri());
         
-        $this->assertEquals(['bar' => 1, 'color' => 'blue', 'mood' => 'sunny'], $request->getQueryParams());
-        $this->assertEmpty($request->getParsedBody());
+        $this->assertEquals(['color' => 'blue', 'mood' => 'sunny'], $request->getParameters());
+        
+        if ($method === 'POST') {
+            $uploadedFiles = $request->getFiles();
+            $this->assertArrayHasKey('file', $uploadedFiles);
+            $this->assertEquals(UPLOAD_ERR_OK, $uploadedFiles['file']['error']);
+            $this->assertEquals('one.txt', $uploadedFiles['file']['name']);
+            $this->assertEquals('text/plain', $uploadedFiles['file']['type']);
+            $this->assertEquals('File Uno', file_get_contents($uploadedFiles['file']['tmp_name']));
+        }
         
         $this->assertEquals([
-            'Referer' => ['http://www.example.com'],
-            'User-Agent' => ['Test/1.0'],
-            'Host' => ['www.example.com']
-        ], $request->getHeaders());
-        
-        return true;
-    }
-    
-    /**
-     * @param ServerRequest $request
-     * @return boolean
-     */
-    public function assertPsrPostRequest($request)
-    {
-        $this->assertInstanceOf(ServerRequest::class, $request);
-        
-        $this->assertEquals('POST', $request->getMethod());
-        $this->assertEquals('http://www.example.com/foo?bar=1', (string)$request->getUri());
-        
-        $this->assertEquals(['bar' => 1], $request->getQueryParams());
-        $this->assertEquals(['color' => 'blue', 'mood' => 'sunny'], $request->getParsedBody());
-        
-        $uploadedFiles = $request->getUploadedFiles();
-        $this->assertArrayHasKey('file', $uploadedFiles);
-        $this->assertEquals('one.txt', $uploadedFiles['file']->getClientFilename());
-        $this->assertEquals('text/plain', $uploadedFiles['file']->getClientMediaType());
-        $this->assertEquals('File Uno', (string)$uploadedFiles['file']->getStream());
-        
-        $this->assertEquals([
-            'Referer' => ['http://www.example.com'],
-            'User-Agent' => ['Test/1.0'],
-            'Host' => ['www.example.com']
-        ], $request->getHeaders());
+            'HTTP_REFERER' => 'http://www.example.com',
+            'HTTP_USER_AGENT' => 'Test/1.0',
+            'HTTP_HOST' => 'www.example.com',
+            'HTTPS' => false
+        ], $request->getServer());
         
         return true;
     }
@@ -198,22 +236,41 @@ class ConnectorTest extends \Codeception\TestCase\Test
      */
     public function testRequest($method)
     {
+        $baseRequest = $this->createMock(ServerRequestInterface::class);
+        $baseResponse = $this->createMock(ResponseInterface::class);
+
+        $psrRequest = $this->createMock(ServerRequestInterface::class);
         $psrResponse = $this->createMock(ResponseInterface::class);
-        $psrResponse->expects($this->once())->method('getStatusCode')->willReturn(200);
-        $psrResponse->expects($this->once())->method('getBody')->willReturn('hello body');
-        $psrResponse->expects($this->once())->method('getHeaders')->willReturn([
-            'Content-Type' => 'text/plain',
-            'Custom-Header' => 'abc'
+        
+        $response = $this->createMock(BrowserKitResponse::class);
+        $response->method('getHeader')->willReturnMap([
+            ['Content-Type', true, 'text/plain'],
+            ['Set-Cookie', false, []]
         ]);
         
         $router = $this->createMock(Router::class);
-        $router->expects($this->once())->method('__invoke')->with(
-            $this->callback([$this, "assertPsr{$method}Request"]),
-            $this->isInstanceOf(Response::class)
-        )->willReturn($psrResponse);
+        $router->expects($this->once())->method('__invoke')
+            ->with($this->identicalTo($psrRequest), $this->identicalTo($baseResponse))
+            ->willReturn($psrResponse);
+        
+        $requestConvertor = $this->createMock(RequestConvertor::class);
+        $requestConvertor->expects($this->once())->method('convert')
+            ->with($this->callback(function ($request) use ($method) {
+                return $this->assertRequest($request, $method);
+            }, $this->identicalTo($baseRequest)))
+            ->willReturn($psrRequest);
+        
+        $responseConvertor = $this->createMock(ResponseConvertor::class);
+        $responseConvertor->expects($this->once())->method('convert')
+            ->with($this->identicalTo($psrResponse))
+            ->willReturn($response);
         
         $connector = new Connector();
         $connector->setRouter($router);
+        $connector->setBaseRequest($baseRequest);
+        $connector->setBaseResponse($baseResponse);
+        $connector->setRequestConvertor($requestConvertor);
+        $connector->setResponseConvertor($responseConvertor);
         
         $uri = 'http://www.example.com/foo?bar=1';
         $parameters = ['color' => 'blue', 'mood' => 'sunny'];
@@ -233,15 +290,9 @@ class ConnectorTest extends \Codeception\TestCase\Test
         
         $connector->request($method, $uri, $parameters, $files, $server);
         
-        $response = $connector->getResponse();
+        $ret = $connector->getResponse();
         
-        $this->assertInstanceOf(BrowserKitResponse::class, $response);
-        $this->assertEquals(200, $response->getStatus());
-        $this->assertEquals('hello body', $response->getContent());
-        $this->assertEquals([
-            'Content-Type' => 'text/plain',
-            'Custom-Header' => 'abc'
-        ], $response->getHeaders());
+        $this->assertSame($response, $ret);
     }
     
     /**

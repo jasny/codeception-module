@@ -4,15 +4,12 @@ namespace Jasny\Codeception;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UploadedFileInterface;
-use Psr\Http\Message\UriInterface;
 use Jasny\HttpMessage\Response;
 use Jasny\HttpMessage\ServerRequest;
-use Jasny\HttpMessage\UploadedFile;
-use Jasny\HttpMessage\Uri;
-use Jasny\HttpMessage\Stream;
 use Jasny\HttpMessage\OutputBufferStream;
 use Jasny\Router;
+use Jasny\Codeception\RequestConvertor;
+use Jasny\Codeception\ResponseConvertor;
 use Symfony\Component\BrowserKit\Client;
 use Symfony\Component\BrowserKit\Request as BrowserKitRequest;
 use Symfony\Component\BrowserKit\Response as BrowserKitResponse;
@@ -38,6 +35,16 @@ class Connector extends Client
      * @var ResponseInterface
      */
     protected $baseResponse;
+    
+    /**
+     * @var RequestConvertor
+     */
+    protected $requestConvertor;
+    
+    /**
+     * @var ResponseConvertor
+     */
+    protected $responseConvertor;
     
     
     /**
@@ -118,16 +125,22 @@ class Connector extends Client
         return $this->baseResponse;
     }
     
+
     /**
-     * Reset the request and response.
-     * This is only required when the request and/or response are bound to the global environment.
+     * Reset the request
      */
-    public function reset()
+    protected function resetInput()
     {
         if (isset($this->baseRequest) && $this->baseRequest instanceof ServerRequest && $this->baseRequest->isStale()) {
             $this->baseRequest = $this->baseRequest->revive();
         }
+    }
 
+    /**
+     * Reset the response
+     */
+    protected function resetOutput()
+    {
         if (isset($this->baseResponse) && $this->baseResponse instanceof Response && $this->baseResponse->isStale()) {
             $this->baseResponse = $this->baseResponse->revive();
         }
@@ -137,120 +150,65 @@ class Connector extends Client
             $this->baseResponse = $this->baseResponse->withBody(clone $this->baseResponse->getBody());
         }
     }
+    
+    /**
+     * Reset the request and response.
+     * This is only required when the request and/or response are bound to the global environment.
+     */
+    public function reset()
+    {
+        $this->resetInput();
+        $this->resetOutput();
+    }
 
-
+    
     /**
-     * Build a full URI from a request
+     * Set the request convertor
      * 
-     * @param BrowserKitRequest $request
-     * @return array [Uri, queryParams]
+     * @param RequestConvertor $convertor
      */
-    protected function buildFullUri(BrowserKitRequest $request)
+    public function setRequestConvertor(RequestConvertor $convertor)
     {
-        $uri = new Uri($request->getUri());
-        
-        $queryParams = [];
-        parse_str($uri->getQuery(), $queryParams);
-        
-        if ($request->getMethod() === 'GET') {
-            $queryParams = array_merge($queryParams, $request->getParameters());
-            $uri = $uri->withQuery(http_build_query($queryParams));
-        }
-        
-        return [$uri, $queryParams];
+        $this->requestConvertor = $convertor;
     }
     
     /**
-     * Get additional server params from request.
-     * @internal It would be nicer if this was solved by Jasny Http Message
+     * Get the request convertor
      * 
-     * @param BrowserKitRequest $request
-     * @param UriInterface      $uri
-     * @param array             $queryParams
-     * @return array
+     * @return RequestConvertor
      */
-    protected function determineServerParams(BrowserKitRequest $request, UriInterface $uri, array $queryParams)
+    public function getRequestConvertor()
     {
-        return [
-            'REQUEST_METHOD' => $request->getMethod(),
-            'QUERY_STRING' => http_build_query($queryParams),
-            'REQUEST_URI' => (string)($uri->withScheme('')->withHost('')->withPort('')->withUserInfo(''))
-        ];
+        if (!isset($this->requestConvertor)) {
+            $this->requestConvertor = new RequestConvertor();
+        }
+        
+        return $this->requestConvertor;
+    }
+    
+    
+    /**
+     * Set the response convertor
+     * 
+     * @param ResponseConvertor $convertor
+     */
+    public function setResponseConvertor(ResponseConvertor $convertor)
+    {
+        $this->responseConvertor = $convertor;
     }
     
     /**
-     * Convert a codeception request to a Jasny PSR-7 server request
+     * Get the response convertor
      * 
-     * @param BrowserKitRequest $request
-     * @return ServerRequest
+     * @return ResponseConvertor
      */
-    protected function convertRequest(BrowserKitRequest $request)
+    public function getResponseConvertor()
     {
-        list($uri, $queryParams) = $this->buildFullUri($request);
-        
-        $stream = fopen('php://temp', 'r+');
-        fwrite($stream, $request->getContent());
-        fseek($stream, 0);
-        
-        $baseRequest = $this->getBaseRequest();
-        
-        if ($baseRequest instanceof ServerRequest) {
-            $serverParams = $this->determineServerParams($request, $uri, (array)$queryParams);
-            $baseRequest = $baseRequest->withServerParams($request->getServer() + $serverParams);
+        if (!isset($this->responseConvertor)) {
+            $this->responseConvertor = new ResponseConvertor();
         }
         
-        $psrRequest = $baseRequest
-            ->withBody(new Stream($stream))
-            ->withMethod($request->getMethod())
-            ->withRequestTarget((string)($uri->withScheme('')->withHost('')->withPort('')->withUserInfo('')))
-            ->withCookieParams($request->getCookies())
-            ->withUri($uri)
-            ->withQueryParams((array)$queryParams)
-            ->withUploadedFiles($this->convertUploadedFiles($request->getFiles()));
-        
-        if ($request->getMethod() !== 'GET' && !empty($request->getParameters())) {
-            $psrRequest = $psrRequest->withParsedBody($request->getParameters());
-        }
-        
-        return $psrRequest;
-    }
-    
-    /**
-     * Convert a Jasny PSR-7 response to a codeception response
-     * 
-     * @param ResponseInterface $psrResponse
-     * @return BrowserKitResponse
-     */
-    protected function convertResponse(ResponseInterface $psrResponse)
-    {
-        return new BrowserKitResponse(
-            (string)$psrResponse->getBody(),
-            $psrResponse->getStatusCode() ?: 200,
-            $psrResponse->getHeaders()
-        );
-    }
-    
-    /**
-     * Convert a list of uploaded files to a Jasny PSR-7 uploaded files
-     * 
-     * @param array $files
-     * @return UploadedFile[]|array
-     */
-    protected function convertUploadedFiles(array $files)
-    {
-        $fileObjects = [];
-        
-        foreach ($files as $fieldName => $file) {
-            if ($file instanceof UploadedFileInterface) {
-                $fileObjects[$fieldName] = $file;
-            } elseif (!isset($file['tmp_name']) && !isset($file['name'])) {
-                $fileObjects[$fieldName] = $this->convertUploadedFiles($file);
-            } else {
-                $fileObjects[$fieldName] = new UploadedFile($file);
-            }
-        }
-        
-        return $fileObjects;
+        return $this->responseConvertor;
     }
     
     
@@ -268,11 +226,11 @@ class Connector extends Client
         
         $this->reset(); // Reset before each HTTP request
         
-        $psrRequest = $this->convertRequest($request);
+        $psrRequest = $this->getRequestConvertor()->convert($request, $this->getBaseRequest());
         
         $router = $this->getRouter();
         $psrResponse = $router->handle($psrRequest, $this->getBaseResponse());
         
-        return $this->convertResponse($psrResponse);
+        return $this->getResponseConvertor()->convert($psrResponse);
     }
 }
