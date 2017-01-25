@@ -21,7 +21,7 @@ use Symfony\Component\BrowserKit\Response as BrowserKitResponse;
 class Connector extends Client
 {
     /**
-     * @var Router
+     * @var RouterInterface
      */
     protected $router;
     
