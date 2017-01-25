@@ -3,6 +3,7 @@
 use Jasny\Codeception\Module;
 use Jasny\Codeception\Connector;
 use Jasny\RouterInterface;
+use Jasny\ErrorHandlerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
@@ -43,7 +44,8 @@ class ModuleTest extends \Codeception\Test\Unit
         $config += ['container' => ''];
         
         $this->module = $this->getMockBuilder(Module::class)
-            ->setMethods(['loadContainer', 'obStart', 'obGetLevel', 'obClean', 'sessionStatus', 'sessionAbort'])
+            ->setMethods(['loadContainer', 'obStart', 'obGetLevel', 'obClean', 'sessionStatus', 'sessionAbort',
+                'debug'])
             ->setConstructorArgs([$moduleContainer, $config])
             ->getMock();
     }
@@ -267,5 +269,27 @@ class ModuleTest extends \Codeception\Test\Unit
         
         $this->assertSame($request, $this->module->baseRequest);
         $this->assertSame($response, $this->module->baseResponse);
+    }
+    
+    public function testFailed()
+    {
+        $test = $this->createMock(TestInterface::class);
+        
+        $exception = $this->createMock(\Exception::class);
+        $exception->method('__toString')->willReturn("Exception + Trace");
+        
+        $errorHandler = $this->createMock(ErrorHandlerInterface::class);
+        $errorHandler->expects($this->once())->method('getError')->willReturn($exception);
+        
+        $container = $this->createMock(ContainerInterface::class);
+        $container->method('has')->with(ErrorHandlerInterface::class)->willReturn(true);
+        $container->expects($this->once())->method('get')->with(ErrorHandlerInterface::class)
+            ->willReturn($errorHandler);
+        
+        $this->module->expects($this->once())->method('debug')->with("Exception + Trace");
+        
+        $this->module->container = $container;
+        
+        $this->module->_failed($test, 1);
     }
 }

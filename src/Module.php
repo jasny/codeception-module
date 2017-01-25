@@ -3,10 +3,11 @@
 namespace Jasny\Codeception;
 
 use Jasny\RouterInterface;
+use Jasny\Codeception\Connector;
+use Jasny\ErrorHandlerInterface;
 use Codeception\Configuration;
 use Codeception\Lib\Framework;
 use Codeception\TestInterface;
-use Jasny\Codeception\Connector;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Interop\Container\ContainerInterface;
@@ -190,6 +191,26 @@ class Module extends Framework
 
 
         parent::_after($test);
+    }
+    
+    /**
+     * Called when test fails
+     * 
+     * @param TestInterface $test
+     * @param mixed         $fail
+     */
+    public function _failed(TestInterface $test, $fail)
+    {
+        if ($this->container->has(ErrorHandlerInterface::class)) {
+            $error = $this->container->get(ErrorHandlerInterface::class)->getError();
+            
+            if ($error) {
+                $this->debug((string)$error);
+            }
+        }
+
+        
+        parent::_failed($test, $fail);
     }
     
     

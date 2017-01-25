@@ -19,7 +19,8 @@
     },
     "require-dev": {
         "twig/twig": "^1.29",
-        "jasny/php-code-quality": "^2.1"
+        "jasny/php-code-quality": "^2.1",
+        "jasny/error-handler": "^0.2"
     },
     "autoload": {
         "psr-4": {
