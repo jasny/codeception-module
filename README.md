@@ -45,7 +45,7 @@ modules:
 
 ### Container
 
-The container must contain an item for `Jasny\Router`.
+The container must contain an item for `Jasny\RouterInterface`.
 
 Example of `container.php` using [Picotainer](https://github.com/thecodingmachine/picotainer).
 
@@ -53,9 +53,10 @@ Example of `container.php` using [Picotainer](https://github.com/thecodingmachin
 use Mouf\Picotainer\Picotainer;
 use Jasny\Router;
 use Jasny\Router\Routes\Glob as Routes;
+use Jasny\RouterInterface;
 
 return new Picotainer([
-    Router::class => function() {
+    RouterInterface::class => function() {
         return new Router(new Routes([
             '/' => ['controller' => 'foo'],
             // ...
@@ -70,13 +71,14 @@ The cointain may have a `Psr\Http\Message\ServerRequestInterface` and `Psr\Http\
 use Mouf\Picotainer\Picotainer;
 use Jasny\Router;
 use Jasny\Router\Routes\Glob as Routes;
+use Jasny\RouterInterface;
 use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\Response;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 return new new Picotainer([
-    Router::class => function() {
+    RouterInterface::class => function() {
         return new Router(new Routes([
             '/' => ['controller' => 'foo'],
             // ...
@@ -106,13 +108,14 @@ output buffering starts and everything is restored after each test.
 use Mouf\Picotainer\Picotainer;
 use Jasny\Router;
 use Jasny\Router\Routes\Glob as Routes;
+use Jasny\RouterInterface;
 use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\Response;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 return new Picotainer([
-    Router::class => function() {
+    RouterInterface::class => function() {
         return new Router(new Routes([
             '/' => ['controller' => 'foo'],
             // ...
@@ -129,5 +132,5 @@ return new Picotainer([
 
 ## API
 
-* router - instance of `Jasny\Router`
+* container - The container
 * client - [BrowserKit](http://symfony.com/doc/current/components/browser_kit.html) client
