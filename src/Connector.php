@@ -6,8 +6,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Jasny\HttpMessage\Response;
 use Jasny\HttpMessage\ServerRequest;
+use Jasny\HttpMessage\GlobalEnvironmentInterface;
 use Jasny\HttpMessage\OutputBufferStream;
-use Jasny\Router;
+use Jasny\RouterInterface;
 use Jasny\Codeception\RequestConvertor;
 use Jasny\Codeception\ResponseConvertor;
 use Symfony\Component\BrowserKit\Client;
@@ -50,9 +51,9 @@ class Connector extends Client
     /**
      * Set the router
      * 
-     * @param Router $router
+     * @param RouterInterface $router
      */
-    public function setRouter(Router $router)
+    public function setRouter(RouterInterface $router)
     {
         $this->router = $router;
     }
@@ -60,7 +61,7 @@ class Connector extends Client
     /**
      * Get the router
      * 
-     * @return Router
+     * @return RouterInterface
      */
     public function getRouter()
     {
@@ -75,7 +76,7 @@ class Connector extends Client
      */
     public function setBaseRequest(ServerRequestInterface $request)
     {
-        if ($request instanceof ServerRequest && $request->isStale()) {
+        if ($request instanceof GlobalEnvironmentInterface && $request->isStale()) {
             throw new \RuntimeException("Unable to set base request: ServerRequest is stale");
         }
         
@@ -104,7 +105,7 @@ class Connector extends Client
      */
     public function setBaseResponse(ResponseInterface $response)
     {
-        if ($response instanceof Response && $response->isStale()) {
+        if ($response instanceof GlobalEnvironmentInterface && $response->isStale()) {
             throw new \RuntimeException("Unable to set base response: Response is stale");
         }
         
@@ -131,7 +132,7 @@ class Connector extends Client
      */
     protected function resetInput()
     {
-        if (isset($this->baseRequest) && $this->baseRequest instanceof ServerRequest && $this->baseRequest->isStale()) {
+        if ($this->baseRequest instanceof GlobalEnvironmentInterface && $this->baseRequest->isStale()) {
             $this->baseRequest = $this->baseRequest->revive();
         }
     }
@@ -141,7 +142,7 @@ class Connector extends Client
      */
     protected function resetOutput()
     {
-        if (isset($this->baseResponse) && $this->baseResponse instanceof Response && $this->baseResponse->isStale()) {
+        if ($this->baseResponse instanceof GlobalEnvironmentInterface && $this->baseResponse->isStale()) {
             $this->baseResponse = $this->baseResponse->revive();
         }
         

@@ -2,7 +2,7 @@
 
 namespace Jasny\Codeception;
 
-use Jasny\Router;
+use Jasny\RouterInterface;
 use Codeception\Configuration;
 use Codeception\Lib\Framework;
 use Codeception\TestInterface;
@@ -23,9 +23,9 @@ class Module extends Framework
     protected $requiredFields = ['container'];
     
     /**
-     * @var Router
+     * @var ContainerInterface
      */
-    public $router;
+    public $container;
     
     /**
      * @var ServerRequestInterface 
@@ -106,16 +106,14 @@ class Module extends Framework
      */
     public function _initialize()
     {
-        $container = $this->initContainer();
-        
-        $this->router = $container->get(Router::class);
+        $this->container = $this->initContainer();
 
-        if ($container->has(ServerRequestInterface::class)) {
-            $this->baseRequest = $container->get(ServerRequestInterface::class);
+        if ($this->container->has(ServerRequestInterface::class)) {
+            $this->baseRequest = $this->container->get(ServerRequestInterface::class);
         }
         
-        if ($container->has(ResponseInterface::class)) {
-            $this->baseResponse = $container->get(ResponseInterface::class);
+        if ($this->container->has(ResponseInterface::class)) {
+            $this->baseResponse = $this->container->get(ResponseInterface::class);
         }
     }
     
@@ -153,7 +151,8 @@ class Module extends Framework
     public function _before(TestInterface $test)
     {
         $this->client = new Connector();
-        $this->client->setRouter($this->router);
+        
+        $this->client->setRouter($this->container->get(RouterInterface::class));
 
         if (isset($this->baseRequest)) {
             $this->client->setBaseRequest($this->baseRequest);

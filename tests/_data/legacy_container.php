@@ -7,11 +7,12 @@ use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\Response;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Jasny\RouterInterface;
 
 ob_start();
 
 return new Picotainer([
-    Router::class => function() {
+    RouterInterface::class => function() {
         return new Router(new Routes([
             '/' => ['controller' => 'legacy-test'],
             '/api/ping' => ['controller' => 'legacy-test', 'action' => 'ping'],

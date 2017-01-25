@@ -2,12 +2,11 @@
 
 use Jasny\Codeception\Module;
 use Jasny\Codeception\Connector;
-use Jasny\Router;
-use Mouf\Picotainer\Picotainer;
+use Jasny\RouterInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
-
+use Interop\Container\ContainerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit_Framework_MockObject_Matcher_InvokedCount as InvokedCount;
 use Codeception\Lib\ModuleContainer;
@@ -60,15 +59,7 @@ class ModuleTest extends \Codeception\Test\Unit
     {
         $this->createModule(['container' => 'tests/_data/container.php']);
         
-        $router = $this->createMock(Router::class);
-        
-        $container = $this->createMock(Picotainer::class);
-        $container->expects($this->any())->method('has')->willReturnMap([
-            [Router::class, true],
-        ]);
-        $container->expects($this->once())->method('get')->willReturnMap([
-            [Router::class, $router],
-        ]);
+        $container = $this->createMock(ContainerInterface::class);
         
         $this->module->expects($this->once())->method('loadContainer')
             ->with(codecept_data_dir('container.php'))
@@ -76,21 +67,19 @@ class ModuleTest extends \Codeception\Test\Unit
         
         $this->module->_initialize();
         
-        $this->assertSame($router, $this->module->router);
+        $this->assertSame($container, $this->module->container);
     }
     
     public function testInitializeWithRequestResponse()
     {
         $this->createModule(['container' => 'tests/_data/container.php']);
         
-        $router = $this->createMock(Router::class);
         $request = $this->createMock(ServerRequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
         
-        $container = $this->createMock(Picotainer::class);
+        $container = $this->createMock(ContainerInterface::class);
         $container->expects($this->any())->method('has')->willReturn(true);
-        $container->expects($this->exactly(3))->method('get')->willReturnMap([
-            [Router::class, $router],
+        $container->expects($this->exactly(2))->method('get')->willReturnMap([
             [ServerRequestInterface::class, $request],
             [ResponseInterface::class, $response]
         ]);
@@ -101,7 +90,7 @@ class ModuleTest extends \Codeception\Test\Unit
         
         $this->module->_initialize();
         
-        $this->assertSame($router, $this->module->router);
+        $this->assertSame($container, $this->module->container);
         $this->assertSame($request, $this->module->baseRequest);
         $this->assertSame($response, $this->module->baseResponse);
     }
@@ -212,16 +201,18 @@ class ModuleTest extends \Codeception\Test\Unit
     public function testBefore($request, $response)
     {
         $test = $this->createMock(TestInterface::class);
-        $router = $this->createMock(Router::class);
+        $router = $this->createMock(RouterInterface::class);
         
-        $this->module->router = $router;
+        $container = $this->createMock(ContainerInterface::class);
+        $container->expects($this->once())->method('get')->with(RouterInterface::class)->willReturn($router);
+        
+        $this->module->container = $container;
         $this->module->baseRequest = $request;
         $this->module->baseResponse = $response;
 
         $this->module->_before($test);
         
         $this->assertInstanceOf(Connector::class, $this->module->client);
-        $this->assertSame($router, $this->module->client->getRouter());
         
         if (isset($request)) {
             $this->assertSame($request, $this->module->client->getBaseRequest());
