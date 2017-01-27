@@ -57,6 +57,22 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $this->assertInstanceOf(ServerRequest::class, $request);
     }
     
+    public function testGetBaseRequestForceStale()
+    {
+        $newRequest = $this->createMock(ServerRequest::class);
+        
+        $request = $this->createMock(ServerRequest::class);
+        $request->method('isStale')->willReturn(false);
+        $request->expects($this->once())->method('withGlobalEnvironment')->with(true)->willReturn($newRequest);
+        
+        $connector = new Connector();
+        $connector->setBaseRequest($request);
+        
+        $ret = $connector->getBaseRequest();
+
+        $this->assertSame($newRequest, $ret);
+    }
+    
     public function testSetBaseRequest()
     {
         $connector = new Connector();
@@ -86,9 +102,25 @@ class ConnectorTest extends \Codeception\TestCase\Test
     public function testGetBaseResponse()
     {
         $connector = new Connector();
-        $request = $connector->getBaseResponse();
+        $response = $connector->getBaseResponse();
         
-        $this->assertInstanceOf(Response::class, $request);
+        $this->assertInstanceOf(Response::class, $response);
+    }
+    
+    public function testGetBaseResponseForceStale()
+    {
+        $newResponse = $this->createMock(Response::class);
+        
+        $response = $this->createMock(Response::class);
+        $response->method('isStale')->willReturn(false);
+        $response->expects($this->once())->method('withGlobalEnvironment')->with(true)->willReturn($newResponse);
+        
+        $connector = new Connector();
+        $connector->setBaseResponse($response);
+        
+        $ret = $connector->getBaseResponse();
+
+        $this->assertSame($newResponse, $ret);
     }
     
     public function testSetBaseResponse()
@@ -159,12 +191,12 @@ class ConnectorTest extends \Codeception\TestCase\Test
         
         $revivedRequest = $this->createMock(ServerRequest::class);
         $request = $this->createMock(ServerRequest::class);
-        $request->expects($this->exactly(2))->method('isStale')->willReturnOnConsecutiveCalls(false, true);
+        $request->method('isStale')->willReturn(false);
         $request->expects($this->once())->method('revive')->willReturn($revivedRequest);
         
         $revivedResponse = $this->createMock(Response::class);
         $response = $this->createMock(Response::class);
-        $response->expects($this->exactly(2))->method('isStale')->willReturnOnConsecutiveCalls(false, true);
+        $response->method('isStale')->willReturn(false);
         $response->expects($this->once())->method('revive')->willReturn($revivedResponse);
         
         $newResponse = $this->createMock(Response::class);
@@ -183,8 +215,8 @@ class ConnectorTest extends \Codeception\TestCase\Test
         
         $connector->reset();
         
-        $this->assertSame($revivedRequest, $connector->getBaseRequest());
-        $this->assertSame($newResponse, $connector->getBaseResponse());
+        $this->assertAttributeSame($revivedRequest, 'baseRequest', $connector);
+        $this->assertAttributeSame($newResponse, 'baseResponse', $connector);
     }
     
     
