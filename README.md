@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/jasny/codeception-module.svg?branch=master)](https://travis-ci.org/jasny/codeception-module)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/jasny/codeception-module/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/jasny/codeception-module/?branch=master)
 [![Code Coverage](https://scrutinizer-ci.com/g/jasny/codeception-module/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/jasny/codeception-module/?branch=master)
-[![SensioLabsInsight](https://insight.sensiolabs.com/projects/956e3ad0-ff30-4d26-acf9-2b8ea24bd1f0/big.png)](https://insight.sensiolabs.com/projects/956e3ad0-ff30-4d26-acf9-2b8ea24bd1f0)
+[![SensioLabsInsight](https://insight.sensiolabs.com/projects/956e3ad0-ff30-4d26-acf9-2b8ea24bd1f0/mini.png)](https://insight.sensiolabs.com/projects/956e3ad0-ff30-4d26-acf9-2b8ea24bd1f0)
 [![Packagist Stable Version](https://img.shields.io/packagist/v/jasny/codeception-module.svg)](https://packagist.org/packages/jasny/codeception-module)
 [![Packagist License](https://img.shields.io/packagist/l/jasny/codeception-module.svg)](https://packagist.org/packages/jasny/codeception-module)
 
