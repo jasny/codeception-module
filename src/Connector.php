@@ -94,7 +94,13 @@ class Connector extends Client
             $this->baseRequest = new ServerRequest();
         }
         
-        return $this->baseRequest;
+        $request = $this->baseRequest;
+        
+        if ($request instanceof GlobalEnvironmentInterface && $request->isStale() === false) {
+            $request = $request->withGlobalEnvironment(true); // Make sure base request is stale
+        }
+        
+        return $request;
     }
     
     
@@ -123,7 +129,13 @@ class Connector extends Client
             $this->baseResponse = new Response();
         }
         
-        return $this->baseResponse;
+        $response = $this->baseResponse;
+        
+        if ($response instanceof GlobalEnvironmentInterface && $response->isStale() === false) {
+            $response = $response->withGlobalEnvironment(true); // Make sure base response is stale
+        }
+        
+        return $response;
     }
     
 
@@ -132,7 +144,7 @@ class Connector extends Client
      */
     protected function resetInput()
     {
-        if ($this->baseRequest instanceof GlobalEnvironmentInterface && $this->baseRequest->isStale()) {
+        if ($this->baseRequest instanceof GlobalEnvironmentInterface) {
             $this->baseRequest = $this->baseRequest->revive();
         }
     }
@@ -142,7 +154,7 @@ class Connector extends Client
      */
     protected function resetOutput()
     {
-        if ($this->baseResponse instanceof GlobalEnvironmentInterface && $this->baseResponse->isStale()) {
+        if ($this->baseResponse instanceof GlobalEnvironmentInterface) {
             $this->baseResponse = $this->baseResponse->revive();
         }
         
