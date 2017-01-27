@@ -7,7 +7,6 @@
 [![Packagist License](https://img.shields.io/packagist/l/jasny/codeception-module.svg)](https://packagist.org/packages/jasny/codeception-module)
 
 This module allows you to run tests using [Jasny MVC](http://www.github.com/jasny/mvc/).
-Based on the [Slim Module](https://github.com/herloct/codeception-slim-module).
 
 ## Install
 

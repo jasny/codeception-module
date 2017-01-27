@@ -20,15 +20,14 @@ class RequestConvertor
      * Create the output stream handle
      * 
      * @param BrowserKitRequest $request
-     * @return resource
+     * @return Stream
      */
     protected function createStream(BrowserKitRequest $request)
     {
-        $stream = fopen('php://temp', 'r+');
+        $stream = fopen('php://temp', 'a+');
         fwrite($stream, $request->getContent());
-        fseek($stream, 0);
         
-        return $stream;
+        return new Stream($stream);
     }
     
     /**
@@ -51,7 +50,26 @@ class RequestConvertor
         
         return [$uri, $queryParams];
     }
-    
+
+    /**
+     * Set the request headers
+     * 
+     * @param ServerRequestInterface $baseRequest
+     * @param array                  $params
+     * @retrun ServerRequestInterface
+     */
+    protected function setRequestHeaders(ServerRequestInterface $baseRequest, array $params)
+    {
+        $headers = (new ServerRequest())->withServerParams($params)->getHeaders();
+        $psrRequest = $baseRequest;
+
+        foreach ($headers as $header => $values) {
+            $psrRequest = $psrRequest->withHeader($header, $values);
+        }
+        
+        return $psrRequest;
+    }
+
     /**
      * Get additional server params from request.
      * @internal It would be nicer if this was solved by Jasny Http Message
@@ -75,7 +93,7 @@ class RequestConvertor
      * 
      * @param ServerRequestInterface $baseRequest
      * @param BrowserKitRequest      $request
-     * @param resource               $stream
+     * @param Stream                 $stream
      * @param UriInterface           $uri
      * @param array                  $queryParams
      * @return ServerRequestInterface
@@ -83,24 +101,21 @@ class RequestConvertor
     protected function setRequestProperties(
         ServerRequestInterface $baseRequest,
         BrowserKitRequest $request,
-        $stream,
+        Stream $stream,
         UriInterface $uri,
         array $queryParams
     ) {
-        $psrRequest = $baseRequest
-            ->withBody(new Stream($stream))
+        return $baseRequest
+            ->withProtocolVersion('1.1')
+            ->withBody($stream)
             ->withMethod($request->getMethod())
             ->withRequestTarget((string)($uri->withScheme('')->withHost('')->withPort('')->withUserInfo('')))
             ->withCookieParams($request->getCookies())
             ->withUri($uri)
-            ->withQueryParams((array)$queryParams)
+            ->withQueryParams($queryParams)
+            ->withParsedBody($request->getMethod() !== 'GET' && !empty($request->getParameters())
+                ? $request->getParameters() : null)
             ->withUploadedFiles($this->convertUploadedFiles($request->getFiles()));
-        
-        if ($request->getMethod() !== 'GET' && !empty($request->getParameters())) {
-            $psrRequest = $psrRequest->withParsedBody($request->getParameters());
-        }
-        
-        return $psrRequest;
     }
     
     /**
@@ -141,9 +156,12 @@ class RequestConvertor
         
         if ($baseRequest instanceof ServerRequest) {
             $serverParams = $this->determineServerParams($request, $uri, (array)$queryParams);
-            $baseRequest = $baseRequest->withServerParams($request->getServer() + $serverParams);
+            $psrRequest = $baseRequest->withServerParams($request->getServer() + $serverParams);
+        } else {
+            $psrRequest = $this->setRequestHeaders($baseRequest, $request->getServer());
         }
         
-        return $this->setRequestProperties($baseRequest, $request, $stream, $uri, (array)$queryParams);
+        return $this->setRequestProperties($psrRequest, $request, $stream, $uri, (array)$queryParams);
     }
 }
+

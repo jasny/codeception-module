@@ -5,6 +5,7 @@ namespace Jasny\Codeception;
 use Jasny\Codeception\RequestConvertor;
 use Jasny\HttpMessage\ServerRequest;
 use Psr\Http\Message\UploadedFileInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\BrowserKit\Request as BrowserKitRequest;
 use org\bovigo\vfs\vfsStream;
 
@@ -211,5 +212,46 @@ class RequestConvertorTest extends \Codeception\TestCase\Test
         
         $this->assertArrayHasKey('oops', $uploadedFiles);
         $this->assertEquals(UPLOAD_ERR_NO_FILE, $uploadedFiles['oops']->getError());
+    }
+    
+    public function testConvertHeaders()
+    {
+        $request = $this->createConfiguredMock(BrowserKitRequest::class, [
+            'getUri' => 'http://www.example.com/',
+            'getMethod' => 'GET',
+            'getParameters' => [],
+            'getFiles' => [],
+            'getServer' => [
+                'FOO' => 'BAR',
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_REFERER' => 'http://www.example.com',
+                'HTTP_USER_AGENT' => 'Test/1.0',
+                'HTTP_NOT_SET' => null
+            ],
+            'getCookies' => []
+        ]);
+        
+        $baseRequest = $this->createMock(ServerRequestInterface::class);
+        $baseRequest->method('withProtocolVersion')->willReturnSelf();
+        $baseRequest->method('withBody')->willReturnSelf();
+        $baseRequest->method('withMethod')->willReturnSelf();
+        $baseRequest->method('withRequestTarget')->willReturnSelf();
+        $baseRequest->method('withCookieParams')->willReturnSelf();
+        $baseRequest->method('withUri')->willReturnSelf();
+        $baseRequest->method('withQueryParams')->willReturnSelf();
+        $baseRequest->method('withParsedBody')->willReturnSelf();
+        $baseRequest->method('withUploadedFiles')->willReturnSelf();
+        
+        $baseRequest->expects($this->exactly(3))->method('withHeader')
+            ->withConsecutive(
+                ['Content-Type', ['application/json']],
+                ['Referer', ['http://www.example.com']],
+                ['User-Agent', ['Test/1.0']]
+            )
+            ->willReturnSelf();
+            
+        $convertor = new RequestConvertor();
+        
+        $convertor->convert($request, $baseRequest);
     }
 }
