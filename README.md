@@ -45,9 +45,13 @@ modules:
 
 ### Container
 
+The container an object that takes care or depency injection. It must be an object the implements [`Interop\Container\ContainerInterface`](https://github.com/container-interop/container-interop).
+If you're project doesn't use an dependency injection container, you can use [Picotainer](https://github.com/thecodingmachine/picotainer),
+which is automatically installed with this codeception module.
+
 The container must contain an item for `Jasny\RouterInterface`.
 
-Example of `container.php` using [Picotainer](https://github.com/thecodingmachine/picotainer).
+Example of `container.php` using Picotainer.
 
 ```php
 use Mouf\Picotainer\Picotainer;
@@ -127,6 +131,47 @@ return new Picotainer([
     ResponseInterface::class => function() {
         return (new Response())->withGlobalEnvironment(true);
     }
+]);
+```
+
+## Error handler
+
+The container may also contain a [Jasny Error Handler](https://github.com/jasny/error-handler). If a fatal error is caught
+by the error handler, the output is typically a nice message intended for the end user. It doesn't contain any information
+about the error itself.
+
+If the container has a `Jasny\ErrorHandlerInterface` object, it will output the error as debug information on a failed
+test. To see the error use the `--debug` flag when running `composer run`.
+
+```php
+use Mouf\Picotainer\Picotainer;
+use Jasny\Router;
+use Jasny\Router\Routes\Glob as Routes;
+use Jasny\RouterInterface;
+use Jasny\ErrorHandler;
+use Jasny\ErrorHandlerInterface;
+
+return new Picotainer([
+    RouterInterface::class => function($container) {
+        $router = new Router(new Routes([
+            '/' => ['controller' => 'foo'],
+            // ...
+        ]));
+        
+        $errorHandler = $container->get(ErrorHandlerInterface::class);
+        $router->add($errorHandler->asMiddleware());
+        
+        return $router;
+    },
+    ErrorHandlerInterface::class => function() {
+        $errorHandler = new ErrorHandler();
+        
+        $errorHandler->logUncaught(E_PARSE | E_ERROR | E_WARNING | E_USER_WARNING);
+        $errorHandler->logUncaught(Exception::class);
+        $errorHandler->logUncaught(Error::class); // PHP7 only
+        
+        return $errorHandler;
+    });
 ]);
 ```
 
