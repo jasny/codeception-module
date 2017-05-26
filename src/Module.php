@@ -101,11 +101,10 @@ class Module extends Framework
         $this->obClean();
     }
 
-    
     /**
      * Initialize the module
      */
-    public function _initialize()
+    public function init()
     {
         $this->container = $this->initContainer();
 
@@ -151,8 +150,9 @@ class Module extends Framework
      */
     public function _before(TestInterface $test)
     {
+        $this->init();
+
         $this->client = new Connector();
-        
         $this->client->setRouter($this->container->get(RouterInterface::class));
 
         if (isset($this->baseRequest)) {
@@ -162,7 +162,7 @@ class Module extends Framework
         if (isset($this->baseResponse)) {
             $this->client->setBaseResponse($this->baseResponse);
         }
-        
+
         parent::_before($test);
     }
     
@@ -174,7 +174,7 @@ class Module extends Framework
     public function _after(TestInterface $test)
     {
         if ($this->sessionStatus() === PHP_SESSION_ACTIVE) {
-            $this->sessionAbort();
+            $this->sessionDestroy();
         }
 
         if (isset($this->client) && $this->client instanceof Connector) {
@@ -188,7 +188,6 @@ class Module extends Framework
                 $this->baseResponse = $this->client->getBaseResponse();
             }
         }
-
 
         parent::_after($test);
     }
@@ -255,11 +254,12 @@ class Module extends Framework
     }
     
     /**
-     * Wrapper around `session_abort()`
+     * Wrapper around `session_unset()` and `session_destroy()`
      * @codeCoverageIgnore
      */
-    protected function sessionAbort()
+    protected function sessionDestroy()
     {
-        session_abort();
+        session_unset();
+        session_destroy();
     }
 }

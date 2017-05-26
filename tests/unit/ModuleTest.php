@@ -44,7 +44,7 @@ class ModuleTest extends \Codeception\Test\Unit
         $config += ['container' => ''];
         
         $this->module = $this->getMockBuilder(Module::class)
-            ->setMethods(['loadContainer', 'obStart', 'obGetLevel', 'obClean', 'sessionStatus', 'sessionAbort',
+            ->setMethods(['loadContainer', 'obStart', 'obGetLevel', 'obClean', 'sessionStatus', 'sessionDestroy',
                 'debug'])
             ->setConstructorArgs([$moduleContainer, $config])
             ->getMock();
@@ -57,7 +57,7 @@ class ModuleTest extends \Codeception\Test\Unit
     }
     
     
-    public function testInitialize()
+    public function testInitContainer()
     {
         $this->createModule(['container' => 'tests/_data/container.php']);
         
@@ -67,12 +67,12 @@ class ModuleTest extends \Codeception\Test\Unit
             ->with(codecept_data_dir('container.php'))
             ->willReturn($container);
         
-        $this->module->_initialize();
+        $this->module->init();
         
         $this->assertSame($container, $this->module->container);
     }
     
-    public function testInitializeWithRequestResponse()
+    public function testInitContainerWithRequestResponse()
     {
         $this->createModule(['container' => 'tests/_data/container.php']);
         
@@ -90,7 +90,7 @@ class ModuleTest extends \Codeception\Test\Unit
             ->with(codecept_data_dir('container.php'))
             ->willReturn($container);
         
-        $this->module->_initialize();
+        $this->module->init();
         
         $this->assertSame($container, $this->module->container);
         $this->assertSame($request, $this->module->baseRequest);
@@ -101,7 +101,7 @@ class ModuleTest extends \Codeception\Test\Unit
      * @expectedException UnexpectedValueException
      * @expectedExceptionMessage Failed to get a container
      */
-    public function testInitializeWithInvalidContainer()
+    public function testInitWithInvalidContainer()
     {
         $this->createModule(['container' => 'tests/_data/container.php']);
         
@@ -109,7 +109,7 @@ class ModuleTest extends \Codeception\Test\Unit
             ->with(codecept_data_dir('container.php'))
             ->willReturn(true);
         
-        $this->module->_initialize();
+        $this->module->init();
     }
     
     
@@ -208,7 +208,7 @@ class ModuleTest extends \Codeception\Test\Unit
         $container = $this->createMock(ContainerInterface::class);
         $container->expects($this->once())->method('get')->with(RouterInterface::class)->willReturn($router);
         
-        $this->module->container = $container;
+        $this->module->method('loadContainer')->willReturn($container);
         $this->module->baseRequest = $request;
         $this->module->baseResponse = $response;
 
@@ -239,12 +239,12 @@ class ModuleTest extends \Codeception\Test\Unit
      * @param int          $status
      * @param InvokedCount $invoke
      */
-    public function testAfterForSessionAbort($status, $invoke)
+    public function testAfterForsessionDestroy($status, $invoke)
     {
         $test = $this->createMock(TestInterface::class);
         
         $this->module->expects($this->once())->method('sessionStatus')->willReturn($status);
-        $this->module->expects($invoke)->method('sessionAbort');
+        $this->module->expects($invoke)->method('sessionDestroy');
         
         $this->module->_after($test);
     }
