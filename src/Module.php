@@ -10,7 +10,7 @@ use Codeception\Lib\Framework;
 use Codeception\TestInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * Module for running functional tests using Jasny MVC

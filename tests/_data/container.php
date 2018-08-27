@@ -1,11 +1,11 @@
 <?php
 
-use Mouf\Picotainer\Picotainer;
+use Jasny\Container\Container;
 use Jasny\Router;
 use Jasny\Router\Routes\Glob as Routes;
 use Jasny\RouterInterface;
 
-return new Picotainer([
+return new Container([
     RouterInterface::class => function() {
         return new Router(new Routes([
             '/' => ['controller' => 'test'],
