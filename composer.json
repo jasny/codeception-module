@@ -21,7 +21,7 @@
         "twig/twig": "^1.29",
         "jasny/php-code-quality": "^2.1",
         "jasny/error-handler": "^0.2",
-        "jasny/container": "^1.0"
+        "mouf/picotainer": "^1.1"
     },
     "autoload": {
         "psr-4": {

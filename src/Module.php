@@ -200,7 +200,7 @@ class Module extends Framework
      */
     public function _failed(TestInterface $test, $fail)
     {
-        if ($this->container->has(ErrorHandlerInterface::class)) {
+        if (isset($this->container) && $this->container->has(ErrorHandlerInterface::class)) {
             $error = $this->container->get(ErrorHandlerInterface::class)->getError();
             
             if ($error) {
