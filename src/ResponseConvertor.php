@@ -12,7 +12,7 @@ class ResponseConvertor
 {
     /**
      * Convert a PSR-7 response to a codeception response
-     * 
+     *
      * @param ResponseInterface $psrResponse
      * @return BrowserKitResponse
      */
@@ -27,7 +27,7 @@ class ResponseConvertor
     
     /**
      * Flatten headers
-     * 
+     *
      * @param array $headers
      * @return array
      */

@@ -18,7 +18,7 @@ class RequestConvertor
 {
     /**
      * Create the output stream handle
-     * 
+     *
      * @param BrowserKitRequest $request
      * @return Stream
      */
@@ -32,7 +32,7 @@ class RequestConvertor
     
     /**
      * Build a full URI from a request
-     * 
+     *
      * @param BrowserKitRequest $request
      * @return array [Uri, queryParams]
      */
@@ -53,7 +53,7 @@ class RequestConvertor
 
     /**
      * Set the request headers
-     * 
+     *
      * @param ServerRequestInterface $baseRequest
      * @param array                  $params
      * @retrun ServerRequestInterface
@@ -73,7 +73,7 @@ class RequestConvertor
     /**
      * Get additional server params from request.
      * @internal It would be nicer if this was solved by Jasny Http Message
-     * 
+     *
      * @param BrowserKitRequest $request
      * @param UriInterface      $uri
      * @param array             $queryParams
@@ -90,7 +90,7 @@ class RequestConvertor
     
     /**
      * Set the server request properties
-     * 
+     *
      * @param ServerRequestInterface $baseRequest
      * @param BrowserKitRequest      $request
      * @param Stream                 $stream
@@ -120,7 +120,7 @@ class RequestConvertor
     
     /**
      * Convert a list of uploaded files to a Jasny PSR-7 uploaded files
-     * 
+     *
      * @param array $files
      * @return UploadedFile[]|array
      */
@@ -144,7 +144,7 @@ class RequestConvertor
     
     /**
      * Convert a codeception request to a PSR-7 server request
-     * 
+     *
      * @param BrowserKitRequest      $request
      * @param ServerRequestInterface $baseRequest
      * @return ServerRequest
@@ -164,4 +164,3 @@ class RequestConvertor
         return $this->setRequestProperties($psrRequest, $request, $stream, $uri, (array)$queryParams);
     }
 }
-

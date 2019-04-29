@@ -99,7 +99,7 @@ class LegacyTestController extends Controller
             $name .= '.html.twig';
         }
 
-        $twig = $this->getTwig();
+        $twig = $this->getViewer()->getTwig();
         $tmpl = $twig->loadTemplate($name);
 
         header('Content-Type: text/html; charset=' . $twig->getCharset());

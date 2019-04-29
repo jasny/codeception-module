@@ -50,7 +50,7 @@ class Connector extends Client
     
     /**
      * Set the router
-     * 
+     *
      * @param RouterInterface $router
      */
     public function setRouter(RouterInterface $router)
@@ -60,7 +60,7 @@ class Connector extends Client
     
     /**
      * Get the router
-     * 
+     *
      * @return RouterInterface
      */
     public function getRouter()
@@ -71,7 +71,7 @@ class Connector extends Client
     
     /**
      * Set the base request
-     * 
+     *
      * @param ServerRequestInterface $request
      */
     public function setBaseRequest(ServerRequestInterface $request)
@@ -85,7 +85,7 @@ class Connector extends Client
     
     /**
      * Get the base request
-     * 
+     *
      * @return ServerRequestInterface
      */
     public function getBaseRequest()
@@ -106,7 +106,7 @@ class Connector extends Client
     
     /**
      * Set the base response
-     * 
+     *
      * @param ResponseInterface $response
      */
     public function setBaseResponse(ResponseInterface $response)
@@ -120,7 +120,7 @@ class Connector extends Client
     
     /**
      * Get the base response
-     * 
+     *
      * @return ResponseInterface
      */
     public function getBaseResponse()
@@ -177,7 +177,7 @@ class Connector extends Client
     
     /**
      * Set the request convertor
-     * 
+     *
      * @param RequestConvertor $convertor
      */
     public function setRequestConvertor(RequestConvertor $convertor)
@@ -187,7 +187,7 @@ class Connector extends Client
     
     /**
      * Get the request convertor
-     * 
+     *
      * @return RequestConvertor
      */
     public function getRequestConvertor()
@@ -202,7 +202,7 @@ class Connector extends Client
     
     /**
      * Set the response convertor
-     * 
+     *
      * @param ResponseConvertor $convertor
      */
     public function setResponseConvertor(ResponseConvertor $convertor)
@@ -212,7 +212,7 @@ class Connector extends Client
     
     /**
      * Get the response convertor
-     * 
+     *
      * @return ResponseConvertor
      */
     public function getResponseConvertor()
@@ -227,7 +227,7 @@ class Connector extends Client
     
     /**
      * Makes a request.
-     * 
+     *
      * @param BrowserKitRequest $request
      * @return BrowserKitResponse
      */

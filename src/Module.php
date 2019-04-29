@@ -1,5 +1,7 @@
 <?php
 
+// phpcs:disable PSR2.Methods.MethodDeclaration -- Method names with underscore are required for codeception module
+
 namespace Jasny\Codeception;
 
 use Jasny\RouterInterface;
@@ -29,12 +31,12 @@ class Module extends Framework
     public $container;
     
     /**
-     * @var ServerRequestInterface 
+     * @var ServerRequestInterface
      */
     public $baseRequest;
     
     /**
-     * @var ResponseInterface 
+     * @var ResponseInterface
      */
     public $baseResponse;
     
@@ -42,7 +44,7 @@ class Module extends Framework
     /**
      * Load the container by including the file.
      * @codeCoverageIgnore
-     * 
+     *
      * @param string $file
      * @return ContainerInterface
      */
@@ -53,7 +55,7 @@ class Module extends Framework
     
     /**
      * Get the container.
-     * 
+     *
      * @return ContainerInterface
      */
     protected function initContainer()
@@ -69,7 +71,7 @@ class Module extends Framework
     
     /**
      * Check if the response writes to the output buffer
-     * 
+     *
      * @return boolean
      */
     protected function usesOutputBuffer()
@@ -79,7 +81,7 @@ class Module extends Framework
     
     /**
      * Enable output buffering
-     * 
+     *
      * @throws \RuntimeException
      */
     protected function startOutputBuffering()
@@ -119,7 +121,7 @@ class Module extends Framework
     
     /**
      * Call before suite
-     * 
+     *
      * @param array $settings
      */
     public function _beforeSuite($settings = [])
@@ -145,7 +147,7 @@ class Module extends Framework
     
     /**
      * Before each test
-     * 
+     *
      * @param TestInterface $test
      */
     public function _before(TestInterface $test)
@@ -168,7 +170,7 @@ class Module extends Framework
     
     /**
      * After each test
-     * 
+     *
      * @param TestInterface $test
      */
     public function _after(TestInterface $test)
@@ -194,7 +196,7 @@ class Module extends Framework
     
     /**
      * Called when test fails
-     * 
+     *
      * @param TestInterface $test
      * @param mixed         $fail
      */
@@ -225,7 +227,7 @@ class Module extends Framework
     /**
      * Wrapper around `ob_get_level()`
      * @codeCoverageIgnore
-     * 
+     *
      * @return int
      */
     protected function obGetLevel()
@@ -245,7 +247,7 @@ class Module extends Framework
     /**
      * Wrapper around `session_status()`
      * @codeCoverageIgnore
-     * 
+     *
      * @return int
      */
     protected function sessionStatus()
