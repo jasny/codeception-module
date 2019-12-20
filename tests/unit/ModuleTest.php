@@ -12,15 +12,12 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit_Framework_MockObject_Matcher_InvokedCount as InvokedCount;
 use Codeception\Lib\ModuleContainer;
 use Codeception\TestInterface;
-use Jasny\TestHelper;
 
 /**
  * @covers Jasny\Codeception\Module
  */
 class ModuleTest extends \Codeception\Test\Unit
 {
-    use TestHelper;
-    
     /**
      * @var \UnitTester
      */
@@ -97,12 +94,11 @@ class ModuleTest extends \Codeception\Test\Unit
         $this->assertSame($response, $this->module->baseResponse);
     }
     
-    /**
-     * @expectedException UnexpectedValueException
-     * @expectedExceptionMessage Failed to get a container
-     */
     public function testInitWithInvalidContainer()
     {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage('Failed to get a container');
+
         $this->createModule(['container' => 'tests/_data/container.php']);
         
         $this->module->expects($this->once())->method('loadContainer')
@@ -153,12 +149,11 @@ class ModuleTest extends \Codeception\Test\Unit
         $this->module->_beforeSuite();
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Failed to start output buffering
-     */
     public function testBeforeSuiteFailObStart()
     {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to start output buffering');
+
         $this->module->expects($this->once())->method('obStart');
         $this->module->expects($this->exactly(2))->method('obGetLevel')->willReturn(0);
 

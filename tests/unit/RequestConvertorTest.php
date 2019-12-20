@@ -189,14 +189,14 @@ class RequestConvertorTest extends \Codeception\TestCase\Test
         $psrRequest = $convertor->convert($request, $baseRequest);
         $uploadedFiles = $psrRequest->getUploadedFiles();
         
-        $this->assertInternalType('array', $uploadedFiles);
+        $this->assertIsArray($uploadedFiles);
         $this->assertArrayHasKey('file', $uploadedFiles);
         $this->assertEquals('file-one.txt', $uploadedFiles['file']->getClientFilename());
         $this->assertEquals('text/plain', $uploadedFiles['file']->getClientMediaType());
         $this->assertEquals('File Uno', (string)$uploadedFiles['file']->getStream());
 
         $this->assertArrayHasKey('more', $uploadedFiles);
-        $this->assertInternalType('array', $uploadedFiles['more']);
+        $this->assertIsArray($uploadedFiles['more']);
         $this->assertEquals([0, 1], array_keys($uploadedFiles['more']));
         
         $this->assertEquals('file-two.txt', $uploadedFiles['more'][0]->getClientFilename());

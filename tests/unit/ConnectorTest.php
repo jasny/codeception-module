@@ -83,12 +83,11 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $this->assertSame($request, $connector->getBaseRequest());
     }
     
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Unable to set base request: ServerRequest is stale
-     */
     public function testSetBaseRequestWithStale()
     {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unable to set base request: ServerRequest is stale');
+
         $connector = new Connector();
         
         $request = $this->createMock(ServerRequest::class);
@@ -133,12 +132,11 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $this->assertSame($response, $connector->getBaseResponse());
     }
     
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Unable to set base response: Response is stale
-     */
     public function testSetBaseResponseWithStale()
     {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unable to set base response: Response is stale');
+
         $connector = new Connector();
         
         $response = $this->createMock(Response::class);
@@ -215,8 +213,8 @@ class ConnectorTest extends \Codeception\TestCase\Test
         
         $connector->reset();
         
-        $this->assertAttributeSame($revivedRequest, 'baseRequest', $connector);
-        $this->assertAttributeSame($newResponse, 'baseResponse', $connector);
+        $this->assertSame($revivedRequest, $connector->getBaseRequest());
+        $this->assertSame($newResponse, $connector->getBaseResponse());
     }
     
     
@@ -327,12 +325,11 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $this->assertSame($response, $ret);
     }
     
-    /**
-     * @expectedException BadMethodCallException
-     * @expectedExceptionMessage Router not set
-     */
     public function testRequestWithoutRouter()
     {
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Router not set');
+
         $connector = new Connector();
         $connector->request('GET', '/foo');
     }   
