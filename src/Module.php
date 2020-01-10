@@ -5,7 +5,6 @@
 namespace Jasny\Codeception;
 
 use Jasny\RouterInterface;
-use Jasny\Codeception\Connector;
 use Jasny\ErrorHandlerInterface;
 use Codeception\Configuration;
 use Codeception\Lib\Framework;

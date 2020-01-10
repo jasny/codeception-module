@@ -37,7 +37,7 @@ class RequestConvertorTest extends \Codeception\TestCase\Test
     
     /**
      * @param ServerRequest $request
-     * @return boolean
+     * @return bool
      */
     public function assertPsrGetRequest($request)
     {
@@ -60,7 +60,7 @@ class RequestConvertorTest extends \Codeception\TestCase\Test
     
     /**
      * @param ServerRequest $request
-     * @return boolean
+     * @return bool
      */
     public function assertPsrPostRequest($request)
     {

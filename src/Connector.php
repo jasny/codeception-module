@@ -9,16 +9,14 @@ use Jasny\HttpMessage\ServerRequest;
 use Jasny\HttpMessage\GlobalEnvironmentInterface;
 use Jasny\HttpMessage\OutputBufferStream;
 use Jasny\RouterInterface;
-use Jasny\Codeception\RequestConvertor;
-use Jasny\Codeception\ResponseConvertor;
-use Symfony\Component\BrowserKit\Client;
+use Symfony\Component\BrowserKit\HttpBrowser;
 use Symfony\Component\BrowserKit\Request as BrowserKitRequest;
 use Symfony\Component\BrowserKit\Response as BrowserKitResponse;
 
 /**
  * Codeception connector for Jasny\MVC
  */
-class Connector extends Client
+class Connector extends HttpBrowser
 {
     /**
      * @var RouterInterface
@@ -231,7 +229,7 @@ class Connector extends Client
      * @param BrowserKitRequest $request
      * @return BrowserKitResponse
      */
-    protected function doRequest($request)
+    protected function doRequest($request): BrowserKitResponse
     {
         if ($this->getRouter() === null) {
             throw new \BadMethodCallException("Router not set");

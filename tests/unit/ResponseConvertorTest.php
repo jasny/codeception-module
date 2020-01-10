@@ -38,7 +38,7 @@ class ResponseConvertorTest extends \Codeception\TestCase\Test
         
         $this->assertInstanceOf(BrowserKitResponse::class, $psrResponse);
         
-        $this->assertEquals(200, $psrResponse->getStatus());
+        $this->assertEquals(200, $psrResponse->getStatusCode());
         $this->assertEquals('hello body', $psrResponse->getContent());
         $this->assertEquals([
             'Content-Type' => 'text/plain',

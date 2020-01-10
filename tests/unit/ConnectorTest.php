@@ -221,7 +221,7 @@ class ConnectorTest extends \Codeception\TestCase\Test
     /**
      * @param BrowserKitRequest $request
      * @param string            $method
-     * @return boolean
+     * @return bool
      */
     public function assertRequest($request, $method)
     {
@@ -272,12 +272,8 @@ class ConnectorTest extends \Codeception\TestCase\Test
         $psrRequest = $this->createMock(ServerRequestInterface::class);
         $psrResponse = $this->createMock(ResponseInterface::class);
         
-        $response = $this->createMock(BrowserKitResponse::class);
-        $response->method('getHeader')->willReturnMap([
-            ['Content-Type', true, 'text/plain'],
-            ['Set-Cookie', false, []]
-        ]);
-        
+        $response = new BrowserKitResponse('', 200, ['Content-Type' => 'text/plain']);
+
         $router = $this->createMock(Router::class);
         $router->expects($this->once())->method('__invoke')
             ->with($this->identicalTo($psrRequest), $this->identicalTo($baseResponse))
